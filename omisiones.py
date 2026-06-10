@@ -48,7 +48,7 @@ if archivo:
         st.stop()
 
     # =========================
-    # FILTRO PRINCIPAL
+    # FILTRO BASE
     # =========================
     df = hoja1[
         hoja1[col_h1_estado].astype(str).str.upper() == "ASIGNADA"
@@ -84,9 +84,6 @@ if archivo:
     resultados = []
     desconocidos = []
 
-    # =========================
-    # PROCESAMIENTO
-    # =========================
     for _, fila in df.iterrows():
 
         profesional = str(fila[col_h1_prof]).strip()
@@ -102,6 +99,12 @@ if archivo:
             resultados.append(None)
 
     df["ESPECIALIDAD_FINAL"] = resultados
+
+    # =========================
+    # BASE MÉDICOS (IMPORTANTE FIX)
+    # =========================
+    df_medicos = df[df[col_h1_prof].isin(hoja2[col_h2_prof])].copy()
+    df_medicos["OMISIONES"] = 1
 
     # =========================
     # USUARIO (DESCONOCIDOS)
@@ -140,7 +143,19 @@ if archivo:
                 ] = especialidad
 
     # =========================
-    # TABLA 1 (RESUMEN)
+    # RANKING (BASE PARA ORDEN)
+    # =========================
+    ranking_esp = (
+        df_medicos.groupby("ESPECIALIDAD_FINAL")["OMISIONES"]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    orden_esp = ranking_esp["ESPECIALIDAD_FINAL"].tolist()
+
+    # =========================
+    # TABLA 1
     # =========================
     tabla = (
         df.dropna(subset=["ESPECIALIDAD_FINAL"])
@@ -153,16 +168,16 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
-    ranking_esp = (
-        df_medicos.groupby("ESPECIALIDAD_FINAL")["OMISIONES"]
-        .sum()
-        .sort_values(ascending=False)
-        .reset_index()
+    # =========================
+    # TABLA 2 (DETALLE ORDENADA)
+    # =========================
+    tabla2 = df_medicos.copy()
+
+    tabla2["ORDEN"] = tabla2["ESPECIALIDAD_FINAL"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
     )
 
-    orden_esp = ranking_esp["ESPECIALIDAD_FINAL"].tolist()
-   
-    tabla2 = df_medicos.copy()
+    tabla2 = tabla2.sort_values(["ORDEN", col_h1_prof])
 
     tabla2.rename(columns={
         col_h1_prof: "NOMBRE PROFESIONAL",
@@ -171,25 +186,9 @@ if archivo:
 
     tabla2["OMISIONES"] = 1
 
-    # ordenar por ranking de especialidad
-    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
-        lambda x: orden_esp.index(x) if x in orden_esp else 999
-    )
-
-    tabla2 = tabla2.sort_values(["ORDEN_ESP", "NOMBRE PROFESIONAL"])
-
-    tabla2 = tabla2[[
-        "ESPECIALIDAD",
-        "NOMBRE PROFESIONAL",
-        "RUT PACIENTE",
-        "NOMBRE PACIENTE",
-        "FECHA",
-        "OMISIONES"
-    ]]
     # =========================
-    # TABLA 3 (RESUMEN POR MÉDICO)
+    # TABLA 3 (RESUMEN ORDENADO)
     # =========================
-
     tabla3 = (
         df_medicos.groupby(["ESPECIALIDAD_FINAL", col_h1_prof])
         .size()
@@ -201,25 +200,26 @@ if archivo:
         col_h1_prof: "NOMBRE PROFESIONAL"
     }, inplace=True)
 
-    tabla3["ORDEN_ESP"] = tabla3["ESPECIALIDAD"].apply(
+    tabla3["ORDEN"] = tabla3["ESPECIALIDAD"].apply(
         lambda x: orden_esp.index(x) if x in orden_esp else 999
     )
 
-    tabla3 = tabla3.sort_values(["ORDEN_ESP", "OMISIONES"], ascending=[True, False])
+    tabla3 = tabla3.sort_values(["ORDEN", "OMISIONES"], ascending=[True, False])
 
     tabla3 = tabla3[[
         "ESPECIALIDAD",
         "NOMBRE PROFESIONAL",
         "OMISIONES"
     ]]
+
     # =========================
-    # EXCLUIDOS LEY 18
+    # MOSTRAR TABLAS
     # =========================
-    if no_medicos:
-        st.subheader("Excluidos (Ley 18)")
-        st.dataframe(pd.DataFrame({
-            "PROFESIONAL": sorted(set(no_medicos))
-        }))
+    st.subheader("Tabla 2 - Detalle Ordenado")
+    st.dataframe(tabla2, use_container_width=True)
+
+    st.subheader("Tabla 3 - Resumen Médicos")
+    st.dataframe(tabla3, use_container_width=True)
 
     # =========================
     # EXPORT EXCEL
@@ -231,19 +231,11 @@ if archivo:
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
         tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
         tabla3.to_excel(writer, sheet_name="Resumen Medicos", index=False)
+
         if nuevos_medicos:
             pd.DataFrame(nuevos_medicos).to_excel(
                 writer,
                 sheet_name="Nuevos Medicos",
-                index=False
-            )
-
-        if no_medicos:
-            pd.DataFrame({
-                "PROFESIONAL": sorted(set(no_medicos))
-            }).to_excel(
-                writer,
-                sheet_name="Excluidos Ley18",
                 index=False
             )
 
