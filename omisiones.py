@@ -13,27 +13,43 @@ archivo = st.file_uploader("Sube archivo Excel", type=["xlsx"])
 
 if archivo:
 
-    # Leer Excel
+    # Leer hojas
     hoja1 = pd.read_excel(archivo, sheet_name=0)
     hoja2 = pd.read_excel(archivo, sheet_name=1)
     hoja3 = pd.read_excel(archivo, sheet_name=2)
 
-    # Limpiar nombres de columnas
+    # Limpiar columnas
     hoja1.columns = hoja1.columns.str.strip().str.upper()
     hoja2.columns = hoja2.columns.str.strip().str.upper()
     hoja3.columns = hoja3.columns.str.strip().str.upper()
 
-    # Columna correcta según tu Excel
-    col_prof = "NOMBRE PROFESIONAL"
+    # Columnas fijas según tu Excel
+    col_h1_prof = "NOMBRE PROFESIONAL"
+    col_h1_agr = "AGRUPACION"
+    col_h1_estado = "ESTADO HORA"
 
-    # Validación básica
-    if col_prof not in hoja1.columns:
-        st.error(f"No existe la columna {col_prof}. Columnas: {hoja1.columns.tolist()}")
+    col_h2_prof = "PROFESIONAL"
+    col_h2_esp = "ESPECIALIDAD"
+
+    col_h3_prof = "PROFESIONAL LEY 18"
+
+    # Validaciones básicas
+    for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
+        if col not in hoja1.columns:
+            st.error(f"Falta columna en Hoja 1: {col}")
+            st.stop()
+
+    if col_h2_prof not in hoja2.columns or col_h2_esp not in hoja2.columns:
+        st.error("Hoja 2 no tiene columnas correctas")
+        st.stop()
+
+    if col_h3_prof not in hoja3.columns:
+        st.error("Hoja 3 no tiene columna PROFESIONAL LEY 18")
         st.stop()
 
     # Filtrar ASIGNADAS
     df = hoja1[
-        hoja1["ESTADO HORA"].astype(str).str.upper() == "ASIGNADA"
+        hoja1[col_h1_estado].astype(str).str.upper() == "ASIGNADA"
     ].copy()
 
     agrupaciones_validas = [
@@ -46,27 +62,30 @@ if archivo:
     ]
 
     df = df[
-        df["AGRUPACION"].astype(str).str.upper().isin(agrupaciones_validas)
+        df[col_h1_agr].astype(str).str.upper().isin(agrupaciones_validas)
     ]
 
-    # Diccionario Hoja 2 (médicos)
+    # Diccionario médicos -> especialidad
     especialidades = dict(
         zip(
-            hoja2["PROFESIONAL"].astype(str).str.strip(),
-            hoja2["ESPECIALIDAD"].astype(str).str.strip()
+            hoja2[col_h2_prof].astype(str).str.strip(),
+            hoja2[col_h2_esp].astype(str).str.strip()
         )
     )
 
-    # Hoja 3 (no médicos)
-    no_medicos = set(hoja3["PROFESIONAL"].astype(str).str.strip())
+    # No médicos (ley 18)
+    no_medicos = set(
+        hoja3[col_h3_prof].astype(str).str.strip()
+    )
 
     resultados = []
     excluidos = []
     desconocidos = []
 
+    # Procesamiento
     for _, fila in df.iterrows():
 
-        profesional = str(fila[col_prof]).strip()
+        profesional = str(fila[col_h1_prof]).strip()
 
         if profesional in especialidades:
             resultados.append(especialidades[profesional])
@@ -110,7 +129,7 @@ if archivo:
                 })
 
                 df.loc[
-                    df[col_prof] == profesional,
+                    df[col_h1_prof] == profesional,
                     "ESPECIALIDAD_FINAL"
                 ] = especialidad
 
@@ -126,9 +145,12 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
+    # Excluidos
     if excluidos:
-        st.subheader("Excluidos (Hoja 3)")
-        st.dataframe(pd.DataFrame({"PROFESIONAL": list(set(excluidos))}))
+        st.subheader("Excluidos (Ley 18)")
+        st.dataframe(pd.DataFrame({
+            "PROFESIONAL": sorted(set(excluidos))
+        }))
 
     # Exportar Excel
     salida = BytesIO()
@@ -145,9 +167,11 @@ if archivo:
             )
 
         if excluidos:
-            pd.DataFrame({"PROFESIONAL": list(set(excluidos))}).to_excel(
+            pd.DataFrame({
+                "PROFESIONAL": sorted(set(excluidos))
+            }).to_excel(
                 writer,
-                sheet_name="Excluidos",
+                sheet_name="Excluidos Ley18",
                 index=False
             )
 
