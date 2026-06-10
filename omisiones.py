@@ -218,44 +218,44 @@ if archivo:
         ascending=[True, False]
     )
 
-# =========================
-# 3. UNIR RANKING CON DETALLE
-# =========================
-tabla2 = tabla2.merge(
-    ranking_prof,
-    on=["ESPECIALIDAD", "NOMBRE PROFESIONAL"],
-    how="left"
-)
+    # =========================
+    # 3. UNIR RANKING CON DETALLE
+    # =========================
+    tabla2 = tabla2.merge(
+        ranking_prof,
+        on=["ESPECIALIDAD", "NOMBRE PROFESIONAL"],
+        how="left"
+    )
 
-# =========================
-# 4. ORDEN FINAL DEL DETALLE
-# =========================
-tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
-    lambda x: orden_esp.index(x) if x in orden_esp else 999
-)
+    # =========================
+    # 4. ORDEN FINAL DEL DETALLE
+    # =========================
+    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
 
-tabla2 = tabla2.sort_values(
-    by=["ORDEN_ESP", "OMISIONES_y", "NOMBRE PROFESIONAL"],
-    ascending=[True, False, True]
-)
+    tabla2 = tabla2.sort_values(
+        by=["ORDEN_ESP", "OMISIONES_y", "NOMBRE PROFESIONAL"],
+        ascending=[True, False, True]
+    )
 
-# =========================
-# 5. ASEGURAR 6 COLUMNAS EXACTAS
-# =========================
-for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
-    if col not in tabla2.columns:
-        tabla2[col] = None
+    # =========================
+    # 5. ASEGURAR 6 COLUMNAS EXACTAS
+    # =========================
+    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+        if col not in tabla2.columns:
+            tabla2[col] = None
 
-tabla2 = tabla2[[
-    "ESPECIALIDAD",
-    "NOMBRE PROFESIONAL",
-    "RUT PACIENTE",
-    "NOMBRE PACIENTE",
-    "FECHA",
-    "OMISIONES_y"
-]]
+    tabla2 = tabla2[[
+        "ESPECIALIDAD",
+        "NOMBRE PROFESIONAL",
+        "RUT PACIENTE",
+        "NOMBRE PACIENTE",
+        "FECHA",
+        "OMISIONES_y"
+    ]]
 
-tabla2.rename(columns={"OMISIONES_y": "OMISIONES"}, inplace=True)
+    tabla2.rename(columns={"OMISIONES_y": "OMISIONES"}, inplace=True)
 
     # =========================
     # TABLA 3 (RESUMEN ORDENADO)
