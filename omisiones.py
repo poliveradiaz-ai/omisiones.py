@@ -496,7 +496,29 @@ if archivo:
     )
 
     st.dataframe(tabla_top_medicos, use_container_width=True)
-    
+
+    st.markdown("## 🏥 Top 5 Policlínicos - Ley 18 (más omisiones)")
+
+    # =========================
+    # TABLA
+    # =========================
+    tabla_poli_18 = (
+        df_no_medicos.groupby("POLICLINICO")
+        .size()
+        .reset_index(name="OMISIONES")
+        .sort_values("OMISIONES", ascending=False)
+        .head(5)
+    )
+
+    st.dataframe(tabla_poli_18, use_container_width=True)
+
+    # =========================
+    # GRÁFICO
+    # =========================
+    st.markdown("### 📊 Visualización")
+
+    st.bar_chart(tabla_poli_18.set_index("POLICLINICO"))
+
     st.markdown("## 🏥 Top Ley 18 - Mayores Omisiones")
 
     tabla_ley18 = (
