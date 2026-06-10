@@ -53,7 +53,9 @@ if archivo:
     df = hoja1[
         hoja1[col_h1_estado].astype(str).str.upper() == "ASIGNADA"
     ].copy()
-
+   
+    df_asignadas = df.copy()
+    
     agrupaciones_validas = [
         "MEDICO APS",
         "MEDICO ESPECIALISTA",
@@ -452,7 +454,24 @@ if archivo:
     # st.dataframe(tabla2, use_container_width=True)
     # st.subheader("Tabla 3 - Resumen Médicos")
     # st.dataframe(tabla3, use_container_width=True)
+        st.markdown("## 📊 Resumen General del Período")
 
+    col1, col2, col3 = st.columns(3)
+    
+    col1.metric(
+        "Total Asignadas",
+        len(df_asignadas)
+    )
+    
+    col2.metric(
+        "Omisiones Ley Médica",
+        len(df_medicos)
+    )
+    
+    col3.metric(
+        "Omisiones Ley 18",
+        len(df_no_medicos)
+    )
     
         # =========================
         # EXPORT EXCEL
