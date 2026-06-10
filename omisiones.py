@@ -188,6 +188,29 @@ if archivo:
         "OMISIONES"
     ]]
     # =========================
+    # TABLA 3 (RESUMEN POR MÉDICO)
+    # =========================
+
+    tabla3 = (
+        df_medicos.groupby(["ESPECIALIDAD_FINAL", col_h1_prof])
+        .size()
+        .reset_index(name="OMISIONES")
+    )
+
+    tabla3.rename(columns={
+        "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
+        col_h1_prof: "NOMBRE PROFESIONAL"
+    }, inplace=True)
+
+    tabla3 = tabla3[[
+        "ESPECIALIDAD",
+        "NOMBRE PROFESIONAL",
+        "OMISIONES"
+    ]]
+
+    st.subheader("Tabla 3 - Resumen por Profesional")
+    st.dataframe(tabla3, use_container_width=True)
+    # =========================
     # EXCLUIDOS LEY 18
     # =========================
     if no_medicos:
