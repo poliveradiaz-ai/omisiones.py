@@ -154,28 +154,39 @@ if archivo:
     st.dataframe(tabla, use_container_width=True)
 
     # =========================
-    # 🟦 TABLA 2 (CORREGIDA)
+    # TABLA 2 (CORREGIDA)
     # SOLO MÉDICOS (HOJA 2)
-    # SIN LEY 18
     # =========================
+
     df_medicos = df[df[col_h1_prof].isin(hoja2[col_h2_prof])].copy()
 
     df_medicos["OMISIONES"] = 1
 
-    tabla2 = df_medicos[[
-        col_h1_prof,
-        "ESPECIALIDAD_FINAL",
-        "OMISIONES"
-    ]].copy()
+    tabla2 = df_medicos.copy()
 
+    # Renombrar columnas base
     tabla2.rename(columns={
         col_h1_prof: "NOMBRE PROFESIONAL",
-        "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
+        "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
+        "RUT PACIENTE": "RUT PACIENTE",
+        "NOMBRE PACIENTE": "NOMBRE PACIENTE",
+        "FECHA": "FECHA"
     }, inplace=True)
 
-    st.subheader("Tabla 2 - Detalle de Omisiones")
-    st.dataframe(tabla2, use_container_width=True)
-
+    # Asegurar columnas existentes (por si no vienen en Excel)
+    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+        if col not in tabla2.columns:
+            tabla2[col] = None
+    
+    # Orden exacto solicitado
+    tabla2 = tabla2[[
+        "ESPECIALIDAD",
+        "NOMBRE PROFESIONAL",
+        "RUT PACIENTE",
+        "NOMBRE PACIENTE",
+        "FECHA",
+        "OMISIONES"
+    ]]
     # =========================
     # EXCLUIDOS LEY 18
     # =========================
