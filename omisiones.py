@@ -453,32 +453,7 @@ if archivo:
     st.subheader("Tabla 3 - Resumen Médicos")
     st.dataframe(tabla3, use_container_width=True)
 
-    st.markdown("## 📊 Dashboard General")
-
     
-    col1, col2, col3, col4 = st.columns(4)
-    
-    col1.metric("Total Registros", len(df))
-    col2.metric("Médicos", len(df_medicos))
-    col3.metric("No Médicos", len(df_no_medicos))
-    col4.metric("Especialidades", df_medicos["ESPECIALIDAD_FINAL"].nunique())
-    
-    st.markdown("## 🩺 Médicos por Especialidad")
-    
-    st.bar_chart(
-        df_medicos.groupby("ESPECIALIDAD_FINAL")
-        .size()
-        .reset_index(name="TOTAL")
-        .set_index("ESPECIALIDAD_FINAL")
-    )
-    
-    st.markdown("## 🏥 No Médicos por Policlínico")
-    
-    st.bar_chart(tabla4.set_index("POLICLINICO"))
-    
-    st.markdown("## 🔥 Top No Médicos")
-    
-    st.dataframe(tabla6.head(10), use_container_width=True)
         # =========================
         # EXPORT EXCEL
         # =========================
