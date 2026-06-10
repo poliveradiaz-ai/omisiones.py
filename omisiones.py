@@ -472,23 +472,23 @@ if archivo:
         # =========================
         # EXPORT EXCEL
         # =========================
-        salida = BytesIO()
+    salida = BytesIO()
     
-        with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
+    with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
 
-        tabla.to_excel(writer, sheet_name="Resumen", index=False)
-        tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
-        tabla3.to_excel(writer, sheet_name="Resumen Medicos", index=False)
-        tabla4.to_excel(writer, sheet_name="Resumen No Medicos", index=False)
-        tabla5.to_excel(writer, sheet_name="Detalle No Medicos", index=False)
-        tabla6.to_excel(writer, sheet_name="Ranking No Medicos", index=False)
+    tabla.to_excel(writer, sheet_name="Resumen", index=False)
+    tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
+    tabla3.to_excel(writer, sheet_name="Resumen Medicos", index=False)
+    tabla4.to_excel(writer, sheet_name="Resumen No Medicos", index=False)
+    tabla5.to_excel(writer, sheet_name="Detalle No Medicos", index=False)
+    tabla6.to_excel(writer, sheet_name="Ranking No Medicos", index=False)
         
-        if nuevos_medicos:
-            pd.DataFrame(nuevos_medicos).to_excel(
-                writer,
-                sheet_name="Nuevos Medicos",
-                index=False
-            )
+    if nuevos_medicos:
+        pd.DataFrame(nuevos_medicos).to_excel(
+            writer,
+            sheet_name="Nuevos Medicos",
+            index=False
+        )
 
     st.download_button(
         "Descargar Excel",
