@@ -228,7 +228,7 @@ if archivo:
 
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
         tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
-
+        tabla3.to_excel(writer, sheet_name="Resumen Medicos", index=False)
         if nuevos_medicos:
             pd.DataFrame(nuevos_medicos).to_excel(
                 writer,
