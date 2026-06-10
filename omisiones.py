@@ -464,11 +464,10 @@ if archivo:
         # =========================
         # MOSTRAR TABLAS
         # =========================
-        st.subheader("Tabla 2 - Detalle Ordenado")
-        st.dataframe(tabla2, use_container_width=True)
-    
-        st.subheader("Tabla 3 - Resumen Médicos")
-        st.dataframe(tabla3, use_container_width=True)
+    st.subheader("Tabla 2 - Detalle Ordenado")
+    st.dataframe(tabla2, use_container_width=True)
+    st.subheader("Tabla 3 - Resumen Médicos")
+    st.dataframe(tabla3, use_container_width=True)
     
         # =========================
         # EXPORT EXCEL
