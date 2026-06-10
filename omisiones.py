@@ -472,6 +472,28 @@ if archivo:
         "Omisiones Ley 18",
         len(df_no_medicos)
     )
+    st.markdown("## 🧑‍⚕️ Top Ley Médica - Mayores Omisiones")
+
+    tabla_ley_medica = (
+        df_medicos.groupby("ESPECIALIDAD_FINAL")
+        .size()
+        .reset_index(name="OMISIONES")
+        .sort_values("OMISIONES", ascending=False)
+    )
+
+    st.dataframe(tabla_ley_medica, use_container_width=True)
+
+    st.markdown("## 🏥 Top Ley 18 - Mayores Omisiones")
+
+    tabla_ley18 = (
+        df_no_medicos.groupby(col_h1_prof)
+        .size()
+        .reset_index(name="OMISIONES")
+        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
+        .sort_values("OMISIONES", ascending=False)
+    )
+
+    st.dataframe(tabla_ley18, use_container_width=True)
     
         # =========================
         # EXPORT EXCEL
