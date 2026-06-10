@@ -153,7 +153,7 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
-        ranking_esp = (
+    ranking_esp = (
         df_medicos.groupby("ESPECIALIDAD_FINAL")["OMISIONES"]
         .sum()
         .sort_values(ascending=False)
