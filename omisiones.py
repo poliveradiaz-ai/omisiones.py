@@ -268,6 +268,186 @@ if archivo:
         "NOMBRE PROFESIONAL",
         "OMISIONES"
     ]]
+    # TABLAS NO MÉDICAS (AGREGAR DESPUÉS DE TABLA 3)
+
+    # =========================
+    
+    # FILTRO NO MÉDICOS
+    
+    # =========================
+    
+    agrupaciones_excluir = [
+    "MEDICO APS",
+    "MEDICO ESPECIALISTA",
+    "ODONTOLOGIA APS",
+    "ODONTOLOGIA ESPECIALIDADES",
+    "QUIMICO FARMACEUTICO"
+    ]
+    
+    medicos_hoja2 = set(
+    hoja2[col_h2_prof].astype(str).str.strip()
+    )
+    
+    df_no_medicos = df[
+    ~df[col_h1_agr].astype(str).str.upper().isin(agrupaciones_excluir)
+    ].copy()
+    
+    # quitar médicos encontrados en PROCEDIMIENTO
+    
+    df_no_medicos = df_no_medicos[
+    ~df_no_medicos[col_h1_prof].astype(str).str.strip().isin(medicos_hoja2)
+    ].copy()
+    
+    df_no_medicos["OMISIONES"] = 1
+    
+    # =========================
+    
+    # TABLA 4
+    
+    # RESUMEN POR POLICLINICO
+    
+    # =========================
+    
+    tabla4 = (
+    df_no_medicos.groupby("POLICLINICO")
+    .size()
+    .reset_index(name="TOTAL")
+    .sort_values("TOTAL", ascending=False)
+    )
+    
+    st.subheader("Tabla 4 - Resumen No Médicos por Policlínico")
+    st.dataframe(tabla4, use_container_width=True)
+    
+    # =========================
+    
+    # RANKING POLICLINICOS
+    
+    # =========================
+    
+    ranking_poli = (
+    tabla4[["POLICLINICO", "TOTAL"]]
+    .copy()
+    )
+    
+    orden_poli = ranking_poli["POLICLINICO"].tolist()
+    
+    # =========================
+    
+    # RANKING PROFESIONALES
+    
+    # =========================
+    
+    ranking_prof_nm = (
+    df_no_medicos.groupby(["POLICLINICO", col_h1_prof])
+    .size()
+    .reset_index(name="TOTAL OMISIONES")
+    )
+    
+    ranking_prof_nm["ORDEN_POLI"] = ranking_prof_nm["POLICLINICO"].apply(
+    lambda x: orden_poli.index(x) if x in orden_poli else 999
+    )
+    
+    ranking_prof_nm = ranking_prof_nm.sort_values(
+    by=["ORDEN_POLI", "TOTAL OMISIONES"],
+    ascending=[True, False]
+    )
+    
+    # =========================
+    
+    # TABLA 5
+    
+    # DETALLE NO MÉDICOS
+    
+    # =========================
+    
+    tabla5 = df_no_medicos.copy()
+    
+    tabla5.rename(columns={
+    col_h1_prof: "NOMBRE PROFESIONAL"
+    }, inplace=True)
+    
+    tabla5 = tabla5.merge(
+    ranking_prof_nm,
+    left_on=["POLICLINICO", "NOMBRE PROFESIONAL"],
+    right_on=["POLICLINICO", col_h1_prof],
+    how="left"
+    )
+    
+    tabla5["ORDEN_POLI"] = tabla5["POLICLINICO"].apply(
+    lambda x: orden_poli.index(x) if x in orden_poli else 999
+    )
+    
+    tabla5 = tabla5.sort_values(
+    by=["ORDEN_POLI", "TOTAL OMISIONES", "NOMBRE PROFESIONAL"],
+    ascending=[True, False, True]
+    )
+    
+    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+    if col not in tabla5.columns:
+    tabla5[col] = None
+    
+    tabla5 = tabla5[
+    [
+    "POLICLINICO",
+    "NOMBRE PROFESIONAL",
+    "RUT PACIENTE",
+    "NOMBRE PACIENTE",
+    "FECHA",
+    "OMISIONES"
+    ]
+    ]
+    
+    st.subheader("Tabla 5 - Detalle No Médicos")
+    st.dataframe(tabla5, use_container_width=True)
+    
+    # =========================
+    
+    # TABLA 6
+    
+    # RESUMEN POR PROFESIONAL
+    
+    # =========================
+    
+    tabla6 = (
+    df_no_medicos.groupby(col_h1_prof)
+    .size()
+    .reset_index(name="OMISIONES")
+    )
+    
+    tabla6.rename(columns={
+    col_h1_prof: "NOMBRE PROFESIONAL"
+    }, inplace=True)
+    
+    policlinicos_prof = (
+    df_no_medicos.groupby(col_h1_prof)["POLICLINICO"]
+    .apply(lambda x: ", ".join(sorted(set(x.astype(str)))))
+    .reset_index()
+    )
+    
+    policlinicos_prof.rename(columns={
+    col_h1_prof: "NOMBRE PROFESIONAL",
+    "POLICLINICO": "POLICLINICOS"
+    }, inplace=True)
+    
+    tabla6 = tabla6.merge(
+    policlinicos_prof,
+    on="NOMBRE PROFESIONAL",
+    how="left"
+    )
+    
+    tabla6 = tabla6[
+    [
+    "NOMBRE PROFESIONAL",
+    "POLICLINICOS",
+    "OMISIONES"
+    ]
+    ].sort_values(
+    "OMISIONES",
+    ascending=False
+    )
+    
+    st.subheader("Tabla 6 - Ranking Profesionales No Médicos")
+    st.dataframe(tabla6, use_container_width=True)
 
     # =========================
     # MOSTRAR TABLAS
@@ -288,7 +468,10 @@ if archivo:
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
         tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
         tabla3.to_excel(writer, sheet_name="Resumen Medicos", index=False)
-
+        tabla4.to_excel(writer, sheet_name="Resumen No Medicos", index=False)
+        tabla5.to_excel(writer, sheet_name="Detalle No Medicos", index=False)
+        tabla6.to_excel(writer, sheet_name="Ranking No Medicos", index=False)
+        
         if nuevos_medicos:
             pd.DataFrame(nuevos_medicos).to_excel(
                 writer,
