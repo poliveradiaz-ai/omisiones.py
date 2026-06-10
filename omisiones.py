@@ -479,6 +479,7 @@ if archivo:
         .size()
         .reset_index(name="OMISIONES")
         .sort_values("OMISIONES", ascending=False)
+        .head(5)
     )
 
     st.dataframe(tabla_ley_medica, use_container_width=True)
@@ -491,6 +492,7 @@ if archivo:
         .reset_index(name="OMISIONES")
         .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
         .sort_values("OMISIONES", ascending=False)
+        .head(5)
     )
 
     st.dataframe(tabla_ley18, use_container_width=True)
