@@ -1,0 +1,1 @@
+# omisiones.py
