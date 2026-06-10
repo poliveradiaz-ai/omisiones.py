@@ -173,6 +173,13 @@ if archivo:
     # TABLA 2 (DETALLE ORDENADO)
     # =========================
 
+    # =========================
+    # TABLA 2 (CON SUBRANKING REAL)
+    # =========================
+    # =========================
+    # TABLA 2 (DETALLE + SUBRANKING CORRECTO)
+    # =========================
+
     tabla2 = df_medicos.copy()
 
     tabla2["OMISIONES"] = 1
@@ -182,18 +189,52 @@ if archivo:
         "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
     }, inplace=True)
 
-    # 🔥 ORDEN POR RANKING DE ESPECIALIDAD (CLAVE)
+    # 🔥 ranking por especialidad (total omisiones)
+    ranking_esp = (
+        tabla2.groupby("ESPECIALIDAD")["OMISIONES"]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    orden_esp = ranking_esp["ESPECIALIDAD"].tolist()
+
+    # 🔥 ranking por profesional dentro de especialidad
+    ranking_prof = (
+        tabla2.groupby(["ESPECIALIDAD", "NOMBRE PROFESIONAL"])["OMISIONES"]
+        .sum()
+        .reset_index()
+    )
+
+    # ordenar especialidad + subranking profesional
+    ranking_prof["ORDEN_ESP"] = ranking_prof["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
+
+    ranking_prof = ranking_prof.sort_values(
+        by=["ORDEN_ESP", "OMISIONES"],
+        ascending=[True, False]
+    )
+
+    # 🔥 unir ranking con detalle (IMPORTANTE)
+    tabla2 = tabla2.merge(
+        ranking_prof[["ESPECIALIDAD", "NOMBRE PROFESIONAL", "OMISIONES"]],
+        on=["ESPECIALIDAD", "NOMBRE PROFESIONAL"],
+        how="left",
+        suffixes=("", "_TOTAL")
+    )
+
+    # 🔥 ordenar detalle respetando ranking
     tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
         lambda x: orden_esp.index(x) if x in orden_esp else 999
     )
 
-    # 🔥 ORDEN FINAL: primero especialidad (ranking), luego profesional
     tabla2 = tabla2.sort_values(
         by=["ORDEN_ESP", "NOMBRE PROFESIONAL"],
         ascending=[True, True]
     )
 
-    # asegurar columnas finales en orden correcto
+    # 🔥 asegurar columnas EXACTAS (6 columnas)
     for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
         if col not in tabla2.columns:
             tabla2[col] = None
