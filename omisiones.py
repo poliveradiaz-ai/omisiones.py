@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import plotly.express as px
 
 st.set_page_config(
     page_title="Analizador de Horas Médicas",
@@ -515,22 +516,24 @@ if archivo:
     # =========================
     # GRÁFICO
     # =========================
-    st.markdown("### 📊 Visualización")
+    st.markdown("### 📊 Visualización completa")
 
-    st.bar_chart(tabla_poli_18.set_index("POLICLINICO"))
-
-    st.markdown("## 🏥 Top Ley 18 - Mayores Omisiones")
-
-    tabla_ley18 = (
-        df_no_medicos.groupby(col_h1_prof)
-        .size()
-        .reset_index(name="OMISIONES")
-        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-        .sort_values("OMISIONES", ascending=False)
-        .head(5)
+    fig = px.bar(
+        tabla_poli_18.sort_values("OMISIONES", ascending=True),
+        x="OMISIONES",
+        y="POLICLINICO",
+        orientation="h",
+        text="OMISIONES",
+        title="Omisiones Ley 18 por Policlínico"
     )
 
-    st.dataframe(tabla_ley18, use_container_width=True)
+    fig.update_layout(
+        height=500,
+        xaxis_title="Omisiones",
+        yaxis_title="Policlínico"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
     
         # =========================
         # EXPORT EXCEL
