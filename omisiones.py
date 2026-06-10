@@ -269,12 +269,12 @@ if archivo:
         "OMISIONES"
     ]]
     # TABLAS NO MÉDICAS (AGREGAR DESPUÉS DE TABLA 3)
-
+    # =========================
+    # BASE PARA NO MÉDICOS (IMPORTANTE FIX)
+    # =========================
     
-    # =========================
-    # NO MÉDICOS - TABLAS 4, 5, 6
-    # =========================
-
+    df_base = df.copy()
+    
     agrupaciones_no_medicas = [
         "TERAPEUTA OCUPACIONAL",
         "PSICOLOGIA",
@@ -287,35 +287,34 @@ if archivo:
         "KINESIOLOGO",
         "PROCEDIMIENTO"
     ]
-
-    df_no_medicos = df[
-        df[col_h1_agr].astype(str).str.upper().isin(agrupaciones_no_medicas)
+    
+    # =========================
+    # FILTRO NO MÉDICOS CORRECTO
+    # =========================
+    
+    df_no_medicos = df_base[
+        df_base[col_h1_agr].astype(str).str.upper().isin(agrupaciones_no_medicas)
     ].copy()
-
+    
     # =========================
     # RESTAR MÉDICOS SOLO EN PROCEDIMIENTO
     # =========================
-
+    
     medicos_hoja2 = set(
         hoja2[col_h2_prof].astype(str).str.strip()
-    )    
-
+    )
+    
     df_no_medicos = df_no_medicos[
         ~(
             (df_no_medicos[col_h1_agr].astype(str).str.upper() == "PROCEDIMIENTO") &
             (df_no_medicos[col_h1_prof].astype(str).str.strip().isin(medicos_hoja2))
         )
     ].copy()
-
-    # =========================
-    # BASE OMISIONES
-    # =========================
-
+    
     df_no_medicos["OMISIONES"] = 1
     
     # =========================
-    # TABLA 4
-    # RESUMEN POR POLICLINICO
+    # TABLA 4 - RESUMEN POR POLICLINICO
     # =========================
     
     tabla4 = (
@@ -328,14 +327,10 @@ if archivo:
     st.subheader("Tabla 4 - Resumen No Médicos por Policlínico")
     st.dataframe(tabla4, use_container_width=True)
     
-    # =========================
-    # RANKING POLICLINICOS
-    # =========================
-    
     orden_poli = tabla4["POLICLINICO"].tolist()
     
     # =========================
-    # RANKING PROFESIONALES
+    # RANKING PROFESIONALES NO MÉDICOS
     # =========================
     
     ranking_prof_nm = (
@@ -354,8 +349,7 @@ if archivo:
     )
     
     # =========================
-    # TABLA 5
-    # DETALLE NO MÉDICOS
+    # TABLA 5 - DETALLE NO MÉDICOS
     # =========================
     
     tabla5 = df_no_medicos.copy()
@@ -399,8 +393,7 @@ if archivo:
     st.dataframe(tabla5, use_container_width=True)
     
     # =========================
-    # TABLA 6
-    # RANKING PROFESIONALES NO MÉDICOS
+    # TABLA 6 - RANKING PROFESIONALES NO MÉDICOS
     # =========================
     
     tabla6 = (
@@ -445,6 +438,8 @@ if archivo:
     
     st.subheader("Tabla 6 - Ranking Profesionales No Médicos")
     st.dataframe(tabla6, use_container_width=True)
+        
+   
     
         # =========================
         # MOSTRAR TABLAS
