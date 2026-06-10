@@ -174,7 +174,7 @@ if archivo:
     # =========================
 
     tabla2 = df_medicos.copy()
-    
+
     tabla2["OMISIONES"] = 1
 
     tabla2.rename(columns={
@@ -182,12 +182,22 @@ if archivo:
         "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
     }, inplace=True)
 
-    # Asegurar columnas aunque no existan en Excel
+    # 🔥 ORDEN POR RANKING DE ESPECIALIDAD (CLAVE)
+    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
+
+    # 🔥 ORDEN FINAL: primero especialidad (ranking), luego profesional
+    tabla2 = tabla2.sort_values(
+        by=["ORDEN_ESP", "NOMBRE PROFESIONAL"],
+        ascending=[True, True]
+    )
+
+    # asegurar columnas finales en orden correcto
     for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
         if col not in tabla2.columns:
             tabla2[col] = None
 
-    # Orden exacto solicitado
     tabla2 = tabla2[[
         "ESPECIALIDAD",
         "NOMBRE PROFESIONAL",
