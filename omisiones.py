@@ -215,33 +215,33 @@ if archivo:
         how="left"
     )
 
-# =========================
-# 5. ORDEN FINAL (ESPECIALIDAD + SUBRANKING)
-# =========================
-tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
-    lambda x: orden_esp.index(x) if x in orden_esp else 999
-)
-
-tabla2 = tabla2.sort_values(
-    by=["ORDEN_ESP", "TOTAL OMISIONES", "NOMBRE PROFESIONAL"],
-    ascending=[True, False, True]
-)
-
-# =========================
-# 6. ASEGURAR COLUMNAS EXACTAS (6)
-# =========================
-for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
-    if col not in tabla2.columns:
-        tabla2[col] = None
-
-tabla2 = tabla2[[
-    "ESPECIALIDAD",
-    "NOMBRE PROFESIONAL",
-    "RUT PACIENTE",
-    "NOMBRE PACIENTE",
-    "FECHA",
-    "OMISIONES"
-]]
+    # =========================
+    # 5. ORDEN FINAL (ESPECIALIDAD + SUBRANKING)
+    # =========================
+    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
+    
+    tabla2 = tabla2.sort_values(
+        by=["ORDEN_ESP", "TOTAL OMISIONES", "NOMBRE PROFESIONAL"],
+        ascending=[True, False, True]
+    )
+    
+    # =========================
+    # 6. ASEGURAR COLUMNAS EXACTAS (6)
+    # =========================
+    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+        if col not in tabla2.columns:
+            tabla2[col] = None
+    
+    tabla2 = tabla2[[
+        "ESPECIALIDAD",
+        "NOMBRE PROFESIONAL",
+        "RUT PACIENTE",
+        "NOMBRE PACIENTE",
+        "FECHA",
+        "OMISIONES"
+    ]]
 
     # =========================
     # TABLA 3 (RESUMEN ORDENADO)
