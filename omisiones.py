@@ -168,23 +168,34 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
+   
     # =========================
-    # TABLA 2 (DETALLE ORDENADA)
+    # TABLA 2 (DETALLE ORDENADO)
     # =========================
+
     tabla2 = df_medicos.copy()
-
-    tabla2["ORDEN"] = tabla2["ESPECIALIDAD_FINAL"].apply(
-        lambda x: orden_esp.index(x) if x in orden_esp else 999
-    )
-
-    tabla2 = tabla2.sort_values(["ORDEN", col_h1_prof])
+    
+    tabla2["OMISIONES"] = 1
 
     tabla2.rename(columns={
         col_h1_prof: "NOMBRE PROFESIONAL",
         "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
     }, inplace=True)
 
-    tabla2["OMISIONES"] = 1
+    # Asegurar columnas aunque no existan en Excel
+    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+        if col not in tabla2.columns:
+            tabla2[col] = None
+
+    # Orden exacto solicitado
+    tabla2 = tabla2[[
+        "ESPECIALIDAD",
+        "NOMBRE PROFESIONAL",
+        "RUT PACIENTE",
+        "NOMBRE PACIENTE",
+        "FECHA",
+        "OMISIONES"
+    ]]
 
     # =========================
     # TABLA 3 (RESUMEN ORDENADO)
