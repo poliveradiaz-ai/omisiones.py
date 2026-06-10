@@ -33,7 +33,7 @@ if archivo:
 
     col_h3_prof = "PROFESIONAL LEY 18"
 
-    # VALIDACIONES
+    # Validaciones básicas
     for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
         if col not in hoja1.columns:
             st.error(f"Falta columna en Hoja 1: {col}")
@@ -47,7 +47,9 @@ if archivo:
         st.error("Hoja 3 no tiene columna PROFESIONAL LEY 18")
         st.stop()
 
-    # Filtrar ASIGNADAS
+    # =========================
+    # FILTRO PRINCIPAL
+    # =========================
     df = hoja1[
         hoja1[col_h1_estado].astype(str).str.upper() == "ASIGNADA"
     ].copy()
@@ -65,7 +67,9 @@ if archivo:
         df[col_h1_agr].astype(str).str.upper().isin(agrupaciones_validas)
     ]
 
-    # Diccionario médicos -> especialidad
+    # =========================
+    # MAPA ESPECIALIDADES
+    # =========================
     especialidades = dict(
         zip(
             hoja2[col_h2_prof].astype(str).str.strip(),
@@ -73,16 +77,16 @@ if archivo:
         )
     )
 
-    # No médicos (ley 18)
     no_medicos = set(
         hoja3[col_h3_prof].astype(str).str.strip()
     )
 
     resultados = []
-    excluidos = []
     desconocidos = []
 
-    # Procesamiento
+    # =========================
+    # PROCESAMIENTO
+    # =========================
     for _, fila in df.iterrows():
 
         profesional = str(fila[col_h1_prof]).strip()
@@ -91,7 +95,6 @@ if archivo:
             resultados.append(especialidades[profesional])
 
         elif profesional in no_medicos:
-            excluidos.append(profesional)
             resultados.append(None)
 
         else:
@@ -101,41 +104,8 @@ if archivo:
     df["ESPECIALIDAD_FINAL"] = resultados
 
     # =========================
-    # 🔴 TABLA 2 (AGREGADA)
+    # USUARIO (DESCONOCIDOS)
     # =========================
-
-    # Agregar OMISIONES (1 por registro asignado)
-    df["OMISIONES"] = 1
-
-    # Crear tabla 2
-    tabla2 = df[[
-        "ESPECIALIDAD_FINAL",
-        col_h1_prof,
-        "OMISIONES"
-    ]].copy()
-
-    # Si existen columnas adicionales en Hoja 1, agrégalas
-    if "RUT PACIENTE" in df.columns:
-        tabla2["RUT PACIENTE"] = df["RUT PACIENTE"]
-
-    if "NOMBRE PACIENTE" in df.columns:
-        tabla2["NOMBRE PACIENTE"] = df["NOMBRE PACIENTE"]
-
-    if "FECHA" in df.columns:
-        tabla2["FECHA"] = df["FECHA"]
-
-    tabla2.rename(columns={
-        "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
-        col_h1_prof: "NOMBRE PROFESIONAL"
-    }, inplace=True)
-
-    st.subheader("Tabla 2 - Detalle de Omisiones")
-    st.dataframe(tabla2, use_container_width=True)
-
-    # =========================
-    # PROFESIONALES NO ENCONTRADOS
-    # =========================
-
     st.subheader("Profesionales no encontrados")
 
     nuevos_medicos = []
@@ -170,9 +140,8 @@ if archivo:
                 ] = especialidad
 
     # =========================
-    # TABLA 1 (YA EXISTENTE)
+    # TABLA 1 (RESUMEN)
     # =========================
-
     tabla = (
         df.dropna(subset=["ESPECIALIDAD_FINAL"])
         .groupby("ESPECIALIDAD_FINAL")
@@ -184,20 +153,46 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
-    # Excluidos
-    if excluidos:
+    # =========================
+    # 🟦 TABLA 2 (CORREGIDA)
+    # SOLO MÉDICOS (HOJA 2)
+    # SIN LEY 18
+    # =========================
+    df_medicos = df[df[col_h1_prof].isin(hoja2[col_h2_prof])].copy()
+
+    df_medicos["OMISIONES"] = 1
+
+    tabla2 = df_medicos[[
+        col_h1_prof,
+        "ESPECIALIDAD_FINAL",
+        "OMISIONES"
+    ]].copy()
+
+    tabla2.rename(columns={
+        col_h1_prof: "NOMBRE PROFESIONAL",
+        "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
+    }, inplace=True)
+
+    st.subheader("Tabla 2 - Detalle de Omisiones")
+    st.dataframe(tabla2, use_container_width=True)
+
+    # =========================
+    # EXCLUIDOS LEY 18
+    # =========================
+    if no_medicos:
         st.subheader("Excluidos (Ley 18)")
         st.dataframe(pd.DataFrame({
-            "PROFESIONAL": sorted(set(excluidos))
+            "PROFESIONAL": sorted(set(no_medicos))
         }))
 
-    # Exportar Excel
+    # =========================
+    # EXPORT EXCEL
+    # =========================
     salida = BytesIO()
 
     with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
 
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
-
         tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
 
         if nuevos_medicos:
@@ -207,9 +202,9 @@ if archivo:
                 index=False
             )
 
-        if excluidos:
+        if no_medicos:
             pd.DataFrame({
-                "PROFESIONAL": sorted(set(excluidos))
+                "PROFESIONAL": sorted(set(no_medicos))
             }).to_excel(
                 writer,
                 sheet_name="Excluidos Ley18",
