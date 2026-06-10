@@ -484,6 +484,19 @@ if archivo:
 
     st.dataframe(tabla_ley_medica, use_container_width=True)
 
+    st.markdown("## 🧑‍⚕️ Top 5 Médicos con más Omisiones")
+
+    tabla_top_medicos = (
+        df_medicos.groupby(col_h1_prof)
+        .size()
+        .reset_index(name="OMISIONES")
+        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
+        .sort_values("OMISIONES", ascending=False)
+        .head(5)
+    )
+
+    st.dataframe(tabla_top_medicos, use_container_width=True)
+    
     st.markdown("## 🏥 Top Ley 18 - Mayores Omisiones")
 
     tabla_ley18 = (
