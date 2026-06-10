@@ -153,32 +153,31 @@ if archivo:
     st.subheader("Resultado por Especialidad")
     st.dataframe(tabla, use_container_width=True)
 
-    # =========================
-    # TABLA 2 (CORREGIDA)
-    # SOLO MÉDICOS (HOJA 2)
-    # =========================
+        ranking_esp = (
+        df_medicos.groupby("ESPECIALIDAD_FINAL")["OMISIONES"]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
 
-    df_medicos = df[df[col_h1_prof].isin(hoja2[col_h2_prof])].copy()
-
-    df_medicos["OMISIONES"] = 1
-
+    orden_esp = ranking_esp["ESPECIALIDAD_FINAL"].tolist()
+   
     tabla2 = df_medicos.copy()
 
-    # Renombrar columnas base
     tabla2.rename(columns={
         col_h1_prof: "NOMBRE PROFESIONAL",
-        "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
-        "RUT PACIENTE": "RUT PACIENTE",
-        "NOMBRE PACIENTE": "NOMBRE PACIENTE",
-        "FECHA": "FECHA"
+        "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
     }, inplace=True)
 
-    # Asegurar columnas existentes (por si no vienen en Excel)
-    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
-        if col not in tabla2.columns:
-            tabla2[col] = None
-    
-    # Orden exacto solicitado
+    tabla2["OMISIONES"] = 1
+
+    # ordenar por ranking de especialidad
+    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
+
+    tabla2 = tabla2.sort_values(["ORDEN_ESP", "NOMBRE PROFESIONAL"])
+
     tabla2 = tabla2[[
         "ESPECIALIDAD",
         "NOMBRE PROFESIONAL",
@@ -202,14 +201,17 @@ if archivo:
         col_h1_prof: "NOMBRE PROFESIONAL"
     }, inplace=True)
 
+    tabla3["ORDEN_ESP"] = tabla3["ESPECIALIDAD"].apply(
+        lambda x: orden_esp.index(x) if x in orden_esp else 999
+    )
+
+    tabla3 = tabla3.sort_values(["ORDEN_ESP", "OMISIONES"], ascending=[True, False])
+
     tabla3 = tabla3[[
         "ESPECIALIDAD",
         "NOMBRE PROFESIONAL",
         "OMISIONES"
     ]]
-
-    st.subheader("Tabla 3 - Resumen por Profesional")
-    st.dataframe(tabla3, use_container_width=True)
     # =========================
     # EXCLUIDOS LEY 18
     # =========================
