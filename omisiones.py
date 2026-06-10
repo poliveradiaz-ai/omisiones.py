@@ -170,16 +170,10 @@ if archivo:
 
    
     # =========================
-    # TABLA 2 (DETALLE ORDENADO)
-    # =========================
-
-    # =========================
-    # TABLA 2 (DETALLE ORDENADO CORRECTO)
+    # TABLA 2 (DETALLE CORREGIDO)
     # =========================
 
     tabla2 = df_medicos.copy()
-
-    tabla2["OMISIONES"] = 1
 
     tabla2.rename(columns={
         col_h1_prof: "NOMBRE PROFESIONAL",
@@ -187,39 +181,33 @@ if archivo:
     }, inplace=True)
 
     # =========================
-    # 1. TOTAL POR ESPECIALIDAD (ranking global)
+    # 1. OMISIONES = 1 POR PACIENTE
     # =========================
-    ranking_esp = (
-        tabla2.groupby("ESPECIALIDAD")["OMISIONES"]
-        .sum()
-        .sort_values(ascending=False)
-        .reset_index()
-    )
-
-    orden_esp = ranking_esp["ESPECIALIDAD"].tolist()
+    tabla2["OMISIONES"] = 1
 
     # =========================
-    # 2. SUBRANKING REAL POR PROFESIONAL
+    # 2. TOTAL OMISIONES POR MÉDICO
     # =========================
     ranking_prof = (
         tabla2.groupby(["ESPECIALIDAD", "NOMBRE PROFESIONAL"])["OMISIONES"]
         .sum()
+        .reset_index(name="TOTAL OMISIONES")
+    )
+    
+    # =========================
+    # 3. RANKING DE ESPECIALIDAD
+    # =========================
+    ranking_esp = (
+        ranking_prof.groupby("ESPECIALIDAD")["TOTAL OMISIONES"]
+        .sum()
+        .sort_values(ascending=False)
         .reset_index()
     )
-
-    # ordenar primero por especialidad (ranking global)
-    ranking_prof["ORDEN_ESP"] = ranking_prof["ESPECIALIDAD"].apply(
-        lambda x: orden_esp.index(x) if x in orden_esp else 999
-    )
-
-    # subranking dentro de especialidad (MÁS OMISIONES PRIMERO)
-    ranking_prof = ranking_prof.sort_values(
-        by=["ORDEN_ESP", "OMISIONES"],
-        ascending=[True, False]
-    )
-
+    
+    orden_esp = ranking_esp["ESPECIALIDAD"].tolist()
+    
     # =========================
-    # 3. UNIR RANKING CON DETALLE
+    # 4. UNIR TOTAL AL DETALLE
     # =========================
     tabla2 = tabla2.merge(
         ranking_prof,
@@ -227,35 +215,33 @@ if archivo:
         how="left"
     )
 
-    # =========================
-    # 4. ORDEN FINAL DEL DETALLE
-    # =========================
-    tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
-        lambda x: orden_esp.index(x) if x in orden_esp else 999
-    )
+# =========================
+# 5. ORDEN FINAL (ESPECIALIDAD + SUBRANKING)
+# =========================
+tabla2["ORDEN_ESP"] = tabla2["ESPECIALIDAD"].apply(
+    lambda x: orden_esp.index(x) if x in orden_esp else 999
+)
 
-    tabla2 = tabla2.sort_values(
-        by=["ORDEN_ESP", "OMISIONES_y", "NOMBRE PROFESIONAL"],
-        ascending=[True, False, True]
-    )
+tabla2 = tabla2.sort_values(
+    by=["ORDEN_ESP", "TOTAL OMISIONES", "NOMBRE PROFESIONAL"],
+    ascending=[True, False, True]
+)
 
-    # =========================
-    # 5. ASEGURAR 6 COLUMNAS EXACTAS
-    # =========================
-    for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
-        if col not in tabla2.columns:
-            tabla2[col] = None
+# =========================
+# 6. ASEGURAR COLUMNAS EXACTAS (6)
+# =========================
+for col in ["RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]:
+    if col not in tabla2.columns:
+        tabla2[col] = None
 
-    tabla2 = tabla2[[
-        "ESPECIALIDAD",
-        "NOMBRE PROFESIONAL",
-        "RUT PACIENTE",
-        "NOMBRE PACIENTE",
-        "FECHA",
-        "OMISIONES_y"
-    ]]
-
-    tabla2.rename(columns={"OMISIONES_y": "OMISIONES"}, inplace=True)
+tabla2 = tabla2[[
+    "ESPECIALIDAD",
+    "NOMBRE PROFESIONAL",
+    "RUT PACIENTE",
+    "NOMBRE PACIENTE",
+    "FECHA",
+    "OMISIONES"
+]]
 
     # =========================
     # TABLA 3 (RESUMEN ORDENADO)
