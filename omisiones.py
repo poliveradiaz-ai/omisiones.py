@@ -270,35 +270,6 @@ if archivo:
     ]]
     # TABLAS NO MÉDICAS (AGREGAR DESPUÉS DE TABLA 3)
 
-    # =========================
-    
-    # FILTRO NO MÉDICOS
-    
-    # =========================
-    
-    agrupaciones_excluir = [
-        "MEDICO APS",
-        "MEDICO ESPECIALISTA",
-        "ODONTOLOGIA APS",
-        "ODONTOLOGIA ESPECIALIDADES",
-        "QUIMICO FARMACEUTICO"
-    ]
-    
-    medicos_hoja2 = set(
-    hoja2[col_h2_prof].astype(str).str.strip()
-    )
-    
-    df_no_medicos = df[
-    ~df[col_h1_agr].astype(str).str.upper().isin(agrupaciones_excluir)
-    ].copy()
-    
-    # quitar médicos encontrados en PROCEDIMIENTO
-    
-    df_no_medicos = df_no_medicos[
-    ~df_no_medicos[col_h1_prof].astype(str).str.strip().isin(medicos_hoja2)
-    ].copy()
-    
-    df_no_medicos["OMISIONES"] = 1
     
     # =========================
     # NO MÉDICOS - TABLAS 4, 5, 6
