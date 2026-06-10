@@ -454,7 +454,7 @@ if archivo:
     # st.dataframe(tabla2, use_container_width=True)
     # st.subheader("Tabla 3 - Resumen Médicos")
     # st.dataframe(tabla3, use_container_width=True)
-        st.markdown("## 📊 Resumen General del Período")
+    st.markdown("## 📊 Resumen General del Período")
 
     col1, col2, col3 = st.columns(3)
     
