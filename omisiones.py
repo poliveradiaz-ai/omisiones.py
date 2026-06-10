@@ -33,7 +33,7 @@ if archivo:
 
     col_h3_prof = "PROFESIONAL LEY 18"
 
-    # Validaciones básicas
+    # VALIDACIONES
     for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
         if col not in hoja1.columns:
             st.error(f"Falta columna en Hoja 1: {col}")
@@ -100,6 +100,42 @@ if archivo:
 
     df["ESPECIALIDAD_FINAL"] = resultados
 
+    # =========================
+    # 🔴 TABLA 2 (AGREGADA)
+    # =========================
+
+    # Agregar OMISIONES (1 por registro asignado)
+    df["OMISIONES"] = 1
+
+    # Crear tabla 2
+    tabla2 = df[[
+        "ESPECIALIDAD_FINAL",
+        col_h1_prof,
+        "OMISIONES"
+    ]].copy()
+
+    # Si existen columnas adicionales en Hoja 1, agrégalas
+    if "RUT PACIENTE" in df.columns:
+        tabla2["RUT PACIENTE"] = df["RUT PACIENTE"]
+
+    if "NOMBRE PACIENTE" in df.columns:
+        tabla2["NOMBRE PACIENTE"] = df["NOMBRE PACIENTE"]
+
+    if "FECHA" in df.columns:
+        tabla2["FECHA"] = df["FECHA"]
+
+    tabla2.rename(columns={
+        "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
+        col_h1_prof: "NOMBRE PROFESIONAL"
+    }, inplace=True)
+
+    st.subheader("Tabla 2 - Detalle de Omisiones")
+    st.dataframe(tabla2, use_container_width=True)
+
+    # =========================
+    # PROFESIONALES NO ENCONTRADOS
+    # =========================
+
     st.subheader("Profesionales no encontrados")
 
     nuevos_medicos = []
@@ -133,7 +169,10 @@ if archivo:
                     "ESPECIALIDAD_FINAL"
                 ] = especialidad
 
-    # Tabla final
+    # =========================
+    # TABLA 1 (YA EXISTENTE)
+    # =========================
+
     tabla = (
         df.dropna(subset=["ESPECIALIDAD_FINAL"])
         .groupby("ESPECIALIDAD_FINAL")
@@ -158,6 +197,8 @@ if archivo:
     with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
 
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
+
+        tabla2.to_excel(writer, sheet_name="Detalle Omisiones", index=False)
 
         if nuevos_medicos:
             pd.DataFrame(nuevos_medicos).to_excel(
