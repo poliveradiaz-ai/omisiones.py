@@ -329,8 +329,8 @@ if archivo:
         .sort_values("TOTAL", ascending=False)
     )
     
-    st.subheader("Tabla 4 - Resumen No Médicos por Policlínico")
-    st.dataframe(tabla4, use_container_width=True)
+    # st.subheader("Tabla 4 - Resumen No Médicos por Policlínico")
+    # st.dataframe(tabla4, use_container_width=True)
     
     orden_poli = tabla4["POLICLINICO"].tolist()
     
@@ -394,8 +394,8 @@ if archivo:
         ]
     ]
     
-    st.subheader("Tabla 5 - Detalle No Médicos")
-    st.dataframe(tabla5, use_container_width=True)
+    # st.subheader("Tabla 5 - Detalle No Médicos")
+    # st.dataframe(tabla5, use_container_width=True)
     
     # =========================
     # TABLA 6 - RANKING GLOBAL
@@ -441,17 +441,17 @@ if archivo:
         ascending=False
     )
     
-    st.subheader("Tabla 6 - Ranking Profesionales No Médicos")
-    st.dataframe(tabla6, use_container_width=True)
+    # st.subheader("Tabla 6 - Ranking Profesionales No Médicos")
+    # st.dataframe(tabla6, use_container_width=True)
        
     
         # =========================
         # MOSTRAR TABLAS
         # =========================
-    st.subheader("Tabla 2 - Detalle Ordenado")
-    st.dataframe(tabla2, use_container_width=True)
-    st.subheader("Tabla 3 - Resumen Médicos")
-    st.dataframe(tabla3, use_container_width=True)
+    # st.subheader("Tabla 2 - Detalle Ordenado")
+    # st.dataframe(tabla2, use_container_width=True)
+    # st.subheader("Tabla 3 - Resumen Médicos")
+    # st.dataframe(tabla3, use_container_width=True)
 
     
         # =========================
