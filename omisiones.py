@@ -167,8 +167,8 @@ if archivo:
         .sort_values("TOTAL", ascending=False)
     )
 
-    st.subheader("Resultado por Especialidad")
-    st.dataframe(tabla, use_container_width=True)
+    # st.subheader("Resultado por Especialidad")
+    # st.dataframe(tabla, use_container_width=True)
 
    
     # =========================
