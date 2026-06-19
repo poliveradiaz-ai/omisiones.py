@@ -229,6 +229,30 @@ if archivo:
     df_medicos["OMISIONES"] = 1
     df_no_medicos["OMISIONES"] = 1
 
+    
+    st.markdown("## 📊 Resumen General de Omisiones")
+    
+    total_asignadas = len(df_asignadas)
+    total_medicos = len(df_medicos)
+    total_no_medicos = len(df_no_medicos)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    col1.metric(
+        "Total Omisiones (Asignadas)",
+        total_asignadas
+    )
+    
+    col2.metric(
+        "Omisiones Médicos",
+        total_medicos
+    )
+    
+    col3.metric(
+        "Omisiones No Médicos",
+        total_no_medicos
+    )
+    
     # =========================
     # TABLA 1 RESUMEN MEDICOS
     # =========================
