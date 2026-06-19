@@ -15,7 +15,7 @@ archivo = st.file_uploader("Sube archivo Excel", type=["xlsx"])
 if archivo:
 
     # =========================
-    # LECTURA DE HOJAS
+    # HOJAS
     # =========================
     hoja1 = pd.read_excel(archivo, sheet_name=0)
     hoja2 = pd.read_excel(archivo, sheet_name=1)
@@ -46,11 +46,11 @@ if archivo:
             st.stop()
 
     if col_h2_prof not in hoja2.columns or col_h2_esp not in hoja2.columns:
-        st.error("Hoja 2 no válida")
+        st.error("Hoja 2 inválida")
         st.stop()
 
     if col_h3_prof not in hoja3.columns:
-        st.error("Hoja 3 no válida")
+        st.error("Hoja 3 inválida")
         st.stop()
 
     # =========================
@@ -61,7 +61,7 @@ if archivo:
     ].copy()
 
     # =========================
-    # PADRONES NORMALIZADOS
+    # PADRONES
     # =========================
     medicos_hoja2 = set(
         hoja2[col_h2_prof].astype(str).str.strip().str.upper()
@@ -79,15 +79,16 @@ if archivo:
     )
 
     # =========================
-    # CLASIFICACION
+    # CLASIFICACION BASE
     # =========================
     tipos = []
     especialidad_final = []
-    desconocidos = []
+    desconocidos_proc = []
 
     for _, fila in df_asignadas.iterrows():
 
         profesional = str(fila[col_h1_prof]).strip().upper()
+        agrupacion = str(fila[col_h1_agr]).strip().upper()
 
         if profesional in medicos_hoja2:
 
@@ -101,26 +102,31 @@ if archivo:
             tipos.append("NO_MEDICO")
             especialidad_final.append(None)
 
+        elif agrupacion == "PROCEDIMIENTO":
+
+            tipos.append("PROC_DUDOSO")
+            especialidad_final.append(None)
+            desconocidos_proc.append(profesional)
+
         else:
 
-            tipos.append("DESCONOCIDO")
+            tipos.append("SIN_CLASIFICAR")
             especialidad_final.append(None)
-            desconocidos.append(profesional)
 
     df_asignadas["TIPO_PROFESIONAL"] = tipos
     df_asignadas["ESPECIALIDAD_FINAL"] = especialidad_final
 
     # =========================
-    # PREGUNTAS USUARIO
+    # PREGUNTAS SOLO PROCEDIMIENTO
     # =========================
-    st.subheader("Profesionales no encontrados")
+    st.subheader("🔎 Procedimientos sin clasificación")
 
     nuevos_medicos = []
     nuevos_no_medicos = []
 
-    for profesional in sorted(set(desconocidos)):
+    for profesional in sorted(set(desconocidos_proc)):
 
-        st.warning(f"{profesional} no encontrado")
+        st.warning(f"{profesional} no está en Hoja 2 ni Hoja 3 (PROCEDIMIENTO)")
 
         tipo = st.radio(
             f"{profesional} es:",
@@ -140,6 +146,7 @@ if archivo:
                     "PROFESIONAL": profesional,
                     "ESPECIALIDAD": esp
                 })
+
                 medicos_hoja2.add(profesional.upper())
                 especialidades[profesional.upper()] = esp
 
@@ -150,15 +157,27 @@ if archivo:
     # =========================
     # RECLASIFICACION FINAL
     # =========================
-    def clasificar(x):
+    def clasificar(x, agr):
+
         x = str(x).strip().upper()
+        agr = str(agr).strip().upper()
+
         if x in medicos_hoja2:
             return "MEDICO"
+
         if x in no_medicos_hoja3:
             return "NO_MEDICO"
+
+        if agr == "PROCEDIMIENTO":
+            return "PROC_DUDOSO"
+
         return "SIN_CLASIFICAR"
 
-    df_asignadas["TIPO_PROFESIONAL"] = df_asignadas[col_h1_prof].apply(clasificar)
+
+    df_asignadas["TIPO_PROFESIONAL"] = df_asignadas.apply(
+        lambda r: clasificar(r[col_h1_prof], r[col_h1_agr]),
+        axis=1
+    )
 
     df_asignadas["ESPECIALIDAD_FINAL"] = df_asignadas[col_h1_prof].astype(str).str.upper().map(especialidades)
 
@@ -167,6 +186,7 @@ if archivo:
     # =========================
     df_medicos = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "MEDICO"].copy()
     df_no_medicos = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "NO_MEDICO"].copy()
+    df_proc = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "PROC_DUDOSO"].copy()
 
     df_medicos["OMISIONES"] = 1
     df_no_medicos["OMISIONES"] = 1
@@ -179,22 +199,17 @@ if archivo:
     st.write("Asignadas:", len(df_asignadas))
     st.write("Médicos:", len(df_medicos))
     st.write("No Médicos:", len(df_no_medicos))
+    st.write("Procedimientos:", len(df_proc))
     st.write("Sin clasificar:", len(df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "SIN_CLASIFICAR"]))
 
     # =========================
-    # TABLA RESUMEN MEDICOS
+    # RESUMEN MEDICOS
     # =========================
     tabla = (
         df_medicos.groupby("ESPECIALIDAD_FINAL")
         .size()
         .reset_index(name="TOTAL")
         .sort_values("TOTAL", ascending=False)
-    )
-
-    tabla2 = (
-        df_medicos.groupby([col_h1_prof, "ESPECIALIDAD_FINAL"])
-        .size()
-        .reset_index(name="OMISIONES")
     )
 
     tabla3 = (
@@ -205,18 +220,9 @@ if archivo:
     )
 
     # =========================
-    # TABLA NO MEDICOS
+    # RESUMEN NO MEDICOS
     # =========================
     tabla4 = (
-        df_no_medicos.groupby(col_h1_prof)
-        .size()
-        .reset_index(name="OMISIONES")
-    )
-
-    tabla5 = df_no_medicos.copy()
-    tabla5 = tabla5.rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-
-    tabla6 = (
         df_no_medicos.groupby(col_h1_prof)
         .size()
         .reset_index(name="OMISIONES")
@@ -235,22 +241,20 @@ if archivo:
     col3.metric("No Médicos", len(df_no_medicos))
 
     st.dataframe(tabla)
-
     st.dataframe(tabla3)
-
     st.dataframe(tabla4)
 
     # =========================
-    # EXPORT EXCEL
+    # EXPORT
     # =========================
     salida = BytesIO()
 
     with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
 
         tabla.to_excel(writer, sheet_name="Resumen", index=False)
-        tabla2.to_excel(writer, sheet_name="Detalle Medicos", index=False)
-        tabla3.to_excel(writer, sheet_name="Ranking Medicos", index=False)
-        tabla4.to_excel(writer, sheet_name="Ranking No Medicos", index=False)
+        tabla3.to_excel(writer, sheet_name="Medicos", index=False)
+        tabla4.to_excel(writer, sheet_name="No Medicos", index=False)
+        df_proc.to_excel(writer, sheet_name="Procedimientos", index=False)
 
         if nuevos_medicos:
             pd.DataFrame(nuevos_medicos).to_excel(
