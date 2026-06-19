@@ -38,7 +38,7 @@ if archivo:
     col_h3_prof = "PROFESIONAL LEY 18"
 
     # =========================
-    # VALIDACIONES
+    # VALIDACION
     # =========================
     for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
         if col not in hoja1.columns:
@@ -79,6 +79,29 @@ if archivo:
     )
 
     # =========================
+    # AGRUPACIONES
+    # =========================
+    agrup_medicos = {
+        "MEDICO APS",
+        "MEDICO ESPECIALISTA",
+        "ODONTOLOGIA APS",
+        "ODONTOLOGIA ESPECIALIDADES",
+        "QUIMICO FARMACEUTICO"
+    }
+
+    agrup_no_medicos = {
+        "TERAPEUTA OCUPACIONAL",
+        "PSICOLOGIA",
+        "ENFERMERA(O)",
+        "ASISTENTE SOCIAL",
+        "NUTRICIONISTA",
+        "TECNOLOGO MEDICO",
+        "FONOAUDIOLOGO",
+        "MATRON(A)",
+        "KINESIOLOGO"
+    }
+
+    # =========================
     # CLASIFICACION BASE
     # =========================
     tipos = []
@@ -87,29 +110,41 @@ if archivo:
 
     for _, fila in df_asignadas.iterrows():
 
-        profesional = str(fila[col_h1_prof]).strip().upper()
-        agrupacion = str(fila[col_h1_agr]).strip().upper()
+        prof = str(fila[col_h1_prof]).strip().upper()
+        agr = str(fila[col_h1_agr]).strip().upper()
 
-        if profesional in medicos_hoja2:
-
+        # MÉDICOS DIRECTOS
+        if agr in agrup_medicos:
             tipos.append("MEDICO")
             especialidad_final.append(
-                especialidades.get(profesional, "SIN ESPECIALIDAD")
+                especialidades.get(prof, "SIN ESPECIALIDAD")
             )
 
-        elif profesional in no_medicos_hoja3:
-
+        # NO MÉDICOS DIRECTOS
+        elif agr in agrup_no_medicos:
             tipos.append("NO_MEDICO")
             especialidad_final.append(None)
 
-        elif agrupacion == "PROCEDIMIENTO":
+        # PROCEDIMIENTO (CASO ESPECIAL)
+        elif agr == "PROCEDIMIENTO":
 
-            tipos.append("PROC_DUDOSO")
-            especialidad_final.append(None)
-            desconocidos_proc.append(profesional)
+            if prof in medicos_hoja2:
+                tipos.append("MEDICO")
+                especialidad_final.append(
+                    especialidades.get(prof, "SIN ESPECIALIDAD")
+                )
 
+            elif prof in no_medicos_hoja3:
+                tipos.append("NO_MEDICO")
+                especialidad_final.append(None)
+
+            else:
+                tipos.append("PROC_DUDOSO")
+                especialidad_final.append(None)
+                desconocidos_proc.append(prof)
+
+        # FUERA DE CATÁLOGO
         else:
-
             tipos.append("SIN_CLASIFICAR")
             especialidad_final.append(None)
 
@@ -117,62 +152,68 @@ if archivo:
     df_asignadas["ESPECIALIDAD_FINAL"] = especialidad_final
 
     # =========================
-    # PREGUNTAS SOLO PROCEDIMIENTO
+    # PREGUNTA SOLO PROCEDIMIENTO
     # =========================
-    st.subheader("🔎 Procedimientos sin clasificación")
+    st.subheader("🔎 Revisión PROCEDIMIENTO")
 
     nuevos_medicos = []
     nuevos_no_medicos = []
 
-    for profesional in sorted(set(desconocidos_proc)):
+    for prof in sorted(set(desconocidos_proc)):
 
-        st.warning(f"{profesional} no está en Hoja 2 ni Hoja 3 (PROCEDIMIENTO)")
+        st.warning(f"{prof} no está en Hoja 2 ni Hoja 3")
 
         tipo = st.radio(
-            f"{profesional} es:",
+            f"{prof} es:",
             ["No Médico", "Médico"],
-            key=profesional
+            key=prof
         )
 
         if tipo == "Médico":
 
             esp = st.text_input(
-                f"Especialidad {profesional}",
-                key=f"esp_{profesional}"
+                f"Especialidad de {prof}",
+                key=f"esp_{prof}"
             )
 
             if esp:
                 nuevos_medicos.append({
-                    "PROFESIONAL": profesional,
+                    "PROFESIONAL": prof,
                     "ESPECIALIDAD": esp
                 })
 
-                medicos_hoja2.add(profesional.upper())
-                especialidades[profesional.upper()] = esp
+                medicos_hoja2.add(prof)
+                especialidades[prof] = esp
 
         else:
-            nuevos_no_medicos.append(profesional)
-            no_medicos_hoja3.add(profesional.upper())
+            nuevos_no_medicos.append(prof)
+            no_medicos_hoja3.add(prof)
 
     # =========================
     # RECLASIFICACION FINAL
     # =========================
-    def clasificar(x, agr):
+    def clasificar(prof, agr):
 
-        x = str(x).strip().upper()
+        prof = str(prof).strip().upper()
         agr = str(agr).strip().upper()
 
-        if x in medicos_hoja2:
+        if agr in agrup_medicos:
             return "MEDICO"
 
-        if x in no_medicos_hoja3:
+        if agr in agrup_no_medicos:
             return "NO_MEDICO"
 
         if agr == "PROCEDIMIENTO":
+
+            if prof in medicos_hoja2:
+                return "MEDICO"
+
+            if prof in no_medicos_hoja3:
+                return "NO_MEDICO"
+
             return "PROC_DUDOSO"
 
         return "SIN_CLASIFICAR"
-
 
     df_asignadas["TIPO_PROFESIONAL"] = df_asignadas.apply(
         lambda r: clasificar(r[col_h1_prof], r[col_h1_agr]),
@@ -192,47 +233,9 @@ if archivo:
     df_no_medicos["OMISIONES"] = 1
 
     # =========================
-    # CONTROL
+    # RESUMEN GENERAL
     # =========================
-    st.markdown("## Control de Consistencia")
-
-    st.write("Asignadas:", len(df_asignadas))
-    st.write("Médicos:", len(df_medicos))
-    st.write("No Médicos:", len(df_no_medicos))
-    st.write("Procedimientos:", len(df_proc))
-    st.write("Sin clasificar:", len(df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "SIN_CLASIFICAR"]))
-
-    # =========================
-    # RESUMEN MEDICOS
-    # =========================
-    tabla = (
-        df_medicos.groupby("ESPECIALIDAD_FINAL")
-        .size()
-        .reset_index(name="TOTAL")
-        .sort_values("TOTAL", ascending=False)
-    )
-
-    tabla3 = (
-        df_medicos.groupby(col_h1_prof)
-        .size()
-        .reset_index(name="OMISIONES")
-        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-    )
-
-    # =========================
-    # RESUMEN NO MEDICOS
-    # =========================
-    tabla4 = (
-        df_no_medicos.groupby(col_h1_prof)
-        .size()
-        .reset_index(name="OMISIONES")
-        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-    )
-
-    # =========================
-    # DASHBOARD
-    # =========================
-    st.markdown("## Resumen")
+    st.markdown("## 📊 Resumen General")
 
     col1, col2, col3 = st.columns(3)
 
@@ -240,20 +243,44 @@ if archivo:
     col2.metric("Médicos", len(df_medicos))
     col3.metric("No Médicos", len(df_no_medicos))
 
-    st.dataframe(tabla)
-    st.dataframe(tabla3)
-    st.dataframe(tabla4)
+    # =========================
+    # TABLAS
+    # =========================
+    tabla_medicos = (
+        df_medicos.groupby("ESPECIALIDAD_FINAL")
+        .size()
+        .reset_index(name="TOTAL")
+        .sort_values("TOTAL", ascending=False)
+    )
+
+    tabla_medicos_detalle = (
+        df_medicos.groupby(col_h1_prof)
+        .size()
+        .reset_index(name="OMISIONES")
+        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
+    )
+
+    tabla_no_medicos = (
+        df_no_medicos.groupby(col_h1_prof)
+        .size()
+        .reset_index(name="OMISIONES")
+        .rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
+    )
+
+    st.dataframe(tabla_medicos)
+    st.dataframe(tabla_medicos_detalle)
+    st.dataframe(tabla_no_medicos)
 
     # =========================
-    # EXPORT
+    # EXPORT EXCEL
     # =========================
     salida = BytesIO()
 
     with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
 
-        tabla.to_excel(writer, sheet_name="Resumen", index=False)
-        tabla3.to_excel(writer, sheet_name="Medicos", index=False)
-        tabla4.to_excel(writer, sheet_name="No Medicos", index=False)
+        tabla_medicos.to_excel(writer, sheet_name="Resumen Medicos", index=False)
+        tabla_medicos_detalle.to_excel(writer, sheet_name="Detalle Medicos", index=False)
+        tabla_no_medicos.to_excel(writer, sheet_name="No Medicos", index=False)
         df_proc.to_excel(writer, sheet_name="Procedimientos", index=False)
 
         if nuevos_medicos:
