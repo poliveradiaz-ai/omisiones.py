@@ -210,7 +210,14 @@ if archivo:
         axis=1
     )
 
-    df_asignadas["ESPECIALIDAD_FINAL"] = df_asignadas[col_h1_prof].astype(str).str.upper().map(especialidades)
+    df_asignadas["ESPECIALIDAD_FINAL"] = (
+        df_asignadas[col_h1_prof]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .map(especialidades)
+        .fillna("SIN ESPECIALIDAD")
+    )
 
     # =========================
     # BASES
@@ -249,7 +256,8 @@ if archivo:
     # TABLA 3 PACIENTES MEDICOS
     # =========================
     tabla_medicos_pacientes = df_medicos.groupby(
-        ["ESPECIALIDAD_FINAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]
+        ["ESPECIALIDAD_FINAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"],
+        dropna=False
     ).size().reset_index(name="OMISIONES")
 
     tabla_medicos_pacientes = tabla_medicos_pacientes.rename(columns={
