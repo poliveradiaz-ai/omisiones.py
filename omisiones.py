@@ -280,7 +280,7 @@ if archivo:
     # TABLA 3 PACIENTES MEDICOS
     # =========================
     tabla_medicos_pacientes = df_medicos.groupby(
-        ["ESPECIALIDAD_FINAL","RUT PROFESIONAL" col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"],
+        ["ESPECIALIDAD_FINAL","RUT PROFESIONAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"],
         dropna=False
     ).size().reset_index(name="OMISIONES")
 
@@ -315,7 +315,7 @@ if archivo:
     # TABLA 6 PACIENTES NO MEDICOS
     # =========================
     tabla_no_medicos_pacientes = df_no_medicos.groupby(
-        ["POLICLINICO","RUT PROFESIONAL" col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]
+        ["POLICLINICO","RUT PROFESIONAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]
     ).size().reset_index(name="TOTAL ASIGNADAS")
 
     tabla_no_medicos_pacientes = tabla_no_medicos_pacientes.rename(columns={
