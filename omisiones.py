@@ -286,7 +286,6 @@ if archivo:
 
     tabla_medicos_pacientes = tabla_medicos_pacientes.rename(columns={
         "ESPECIALIDAD_FINAL": "ESPECIALIDAD",
-        "RUT PROFESIONAL: "RUT PROFESIONAL",
         col_h1_prof: "NOMBRE PROFESIONAL"
     })
 
@@ -320,7 +319,6 @@ if archivo:
     ).size().reset_index(name="TOTAL ASIGNADAS")
 
     tabla_no_medicos_pacientes = tabla_no_medicos_pacientes.rename(columns={
-        "RUT PROFESIONAL": "RUT PROFESIONAL", 
         col_h1_prof: "NOMBRE PROFESIONAL"
     })
 
