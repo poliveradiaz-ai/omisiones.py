@@ -113,16 +113,35 @@ if archivo:
         prof = str(fila[col_h1_prof]).strip().upper()
         agr = str(fila[col_h1_agr]).strip().upper()
 
-        if agr in agrup_medicos:
+        # ==========================================
+        # PRIORIDAD 1: NO MÉDICOS DE HOJA 3
+        # ==========================================
+        # Si el profesional aparece en Hoja 3,
+        # SIEMPRE será considerado NO MÉDICO,
+        # aunque su agrupación sea médica.
+        if prof in no_medicos_hoja3:
+            tipos.append("NO_MEDICO")
+            especialidad_final.append(None)
+
+        # ==========================================
+        # PRIORIDAD 2: AGRUPACIONES MÉDICAS
+        # ==========================================
+        elif agr in agrup_medicos:
             tipos.append("MEDICO")
             especialidad_final.append(
                 especialidades.get(prof, "SIN ESPECIALIDAD")
             )
 
+        # ==========================================
+        # PRIORIDAD 3: AGRUPACIONES NO MÉDICAS
+        # ==========================================
         elif agr in agrup_no_medicos:
             tipos.append("NO_MEDICO")
             especialidad_final.append(None)
 
+        # ==========================================
+        # PROCEDIMIENTO
+        # ==========================================
         elif agr == "PROCEDIMIENTO":
 
             if prof in medicos_hoja2:
@@ -139,6 +158,11 @@ if archivo:
                 tipos.append("PROC_DUDOSO")
                 especialidad_final.append(None)
                 desconocidos_proc.append(prof)
+
+        else:
+            tipos.append("PROC_DUDOSO")
+            especialidad_final.append(None)
+            desconocidos_proc.append(prof)
 
     df_asignadas["TIPO_PROFESIONAL"] = tipos
     df_asignadas["ESPECIALIDAD_FINAL"] = especialidad_final
@@ -189,12 +213,30 @@ if archivo:
         prof = str(prof).strip().upper()
         agr = str(agr).strip().upper()
 
+        # ==========================================
+        # PRIORIDAD 1: LISTA DE NO MÉDICOS - HOJA 3
+        # ==========================================
+        # Si el profesional aparece en Hoja 3,
+        # SIEMPRE será considerado NO MÉDICO,
+        # aunque su agrupación diga MEDICO.
+        if prof in no_medicos_hoja3:
+            return "NO_MEDICO"
+
+        # ==========================================
+        # PRIORIDAD 2: AGRUPACIONES MÉDICAS
+        # ==========================================
         if agr in agrup_medicos:
             return "MEDICO"
 
+        # ==========================================
+        # PRIORIDAD 3: AGRUPACIONES NO MÉDICAS
+        # ==========================================
         if agr in agrup_no_medicos:
             return "NO_MEDICO"
 
+        # ==========================================
+        # PRIORIDAD 4: PROCEDIMIENTO
+        # ==========================================
         if agr == "PROCEDIMIENTO":
 
             if prof in medicos_hoja2:
@@ -205,18 +247,23 @@ if archivo:
 
             return "PROC_DUDOSO"
 
+        return "PROC_DUDOSO"
+
     df_asignadas["TIPO_PROFESIONAL"] = df_asignadas.apply(
         lambda r: clasificar(r[col_h1_prof], r[col_h1_agr]),
         axis=1
     )
 
-    df_asignadas["ESPECIALIDAD_FINAL"] = (
-        df_asignadas[col_h1_prof]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-        .map(especialidades)
-        .fillna("SIN ESPECIALIDAD")
+    df_asignadas["ESPECIALIDAD_FINAL"] = df_asignadas.apply(
+        lambda r: (
+            especialidades.get(
+                str(r[col_h1_prof]).strip().upper(),
+                "SIN ESPECIALIDAD"
+            )
+            if r["TIPO_PROFESIONAL"] == "MEDICO"
+            else None
+        ),
+        axis=1
     )
 
     # =========================
