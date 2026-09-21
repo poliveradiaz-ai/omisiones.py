@@ -432,20 +432,20 @@ if archivo:
     else:
        st.markdown("### 📅 Fechas y Datos del reporte Word")
     
-     col1, col2, col3 = st.columns(3)
+       col1, col2, col3 = st.columns(3)
     
     with col1:
-         fecha_corte = st.date_input(
-           "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
-      )
+       fecha_corte = st.date_input(
+          "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
+        )
     
      with col2:
-      fecha_envio_preliminar = st.date_input(
-            "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
-         )
+       fecha_envio_preliminar = st.date_input(
+          "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
+        )
     
      with col3:
-         meses = {
+       meses = {
               1: "ENERO",
               2: "FEBRERO",
               3: "MARZO",
