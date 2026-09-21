@@ -457,6 +457,20 @@ if archivo:
             key="plantilla_ley_18"
         )
 
+    # =========================
+    # CLAVES ARCHIVO WORD
+    # =========================
+    
+    contexto = {
+    
+        'fecha_corte': fecha_corte,
+        'fecha_envio_preliminar': fecha_envio_preliminar,
+        'total_omisiones_agendadas': total_omisiones_agendadas,
+        'total_omisiones_asignadas': total_omisiones_asignadas,
+        'total_medicos': total_medicos,
+        'total_no_medicos': total_no_medicos,
+    
+    }
 
     # =========================
     # TABLA 1 RESUMEN MEDICOS
