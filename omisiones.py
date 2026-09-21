@@ -419,10 +419,10 @@ if archivo:
           "Subir Plantilla Ley Médica (.docx)", type=["docx"]
         )
     
-     with col_plantilla2:
-     plantilla_ley18 = st.file_uploader(
+    with col_plantilla2:
+       plantilla_ley18 = st.file_uploader(
           "Subir Plantilla Ley 18 / No Médicos (.docx)", type=["docx"]
-     )
+        )
     
     if not plantilla_medica or not plantilla_ley18:
     st.info(
