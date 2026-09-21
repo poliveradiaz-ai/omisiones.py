@@ -324,6 +324,20 @@ if archivo:
             "Total omisiones agendadas",
             total_omisiones_agendadas
         )
+    # =========================
+    # PLANTILLA WORD 1
+    # =========================
+        
+    st.markdown("### 📄 Plantilla Word")
+        
+    plantilla_word = st.file_uploader(
+        "Sube la plantilla Word que deseas rellenar",
+        type=["docx"],
+        key="plantilla_word_1"
+    )
+
+
+    
 
 
 
