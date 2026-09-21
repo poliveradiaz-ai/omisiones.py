@@ -8,7 +8,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Analizador de Horas Asignadas")
+st.title("Reporte de Omisiones")
 
 archivo = st.file_uploader("Sube archivo Excel", type=["xlsx"])
 
