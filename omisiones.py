@@ -476,15 +476,15 @@ if archivo:
          "{{total_no_medicos}}": str(total_no_medicos),
         }
     
-        def procesar_docx(file, datos_reemplazo):
-          doc = Document(file)
+    def procesar_docx(file, datos_reemplazo):
+         doc = Document(file)
     
-          for p in doc.paragraphs:
+         for p in doc.paragraphs:
             for clave, valor in datos_reemplazo.items():
               if clave in p.text:
                 p.text = p.text.replace(clave, valor)
     
-          for t in doc.tables:
+         for t in doc.tables:
             for row in t.rows:
               for cell in row.cells:
                 for p in cell.paragraphs:
