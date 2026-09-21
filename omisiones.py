@@ -430,16 +430,33 @@ if archivo:
         )
 
     # =========================
-    # PLANTILLA WORD 1
+    # PLANTILLAS WORD
     # =========================
+    
+    st.markdown("### 📄 Plantillas Word")
+    
+    col_word1, col_word2 = st.columns(2)
+    
+    with col_word1:
+    
+        st.markdown("#### 🩺 Plantilla Ley Médica")
+    
+        plantilla_ley_medica = st.file_uploader(
+            "Sube la plantilla Word de Ley Médica",
+            type=["docx"],
+            key="plantilla_ley_medica"
+        )
+    
+    with col_word2:
+    
+        st.markdown("#### 📋 Plantilla Ley 18")
+    
+        plantilla_ley_18 = st.file_uploader(
+            "Sube la plantilla Word de Ley 18",
+            type=["docx"],
+            key="plantilla_ley_18"
+        )
 
-    st.markdown("### 📄 Plantilla Word")
-
-    plantilla_word = st.file_uploader(
-        "Sube la plantilla Word que deseas rellenar",
-        type=["docx"],
-        key="plantilla_word_1"
-    )
 
     # =========================
     # TABLA 1 RESUMEN MEDICOS
