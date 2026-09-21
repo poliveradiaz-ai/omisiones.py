@@ -492,9 +492,9 @@ if archivo:
                     if clave in p.text:
                       p.text = p.text.replace(clave, valor)
     
-          out = BytesIO()
-          doc.save(out)
-          return out.getvalue()
+         out = BytesIO()
+         doc.save(out)
+         return out.getvalue()
     
         # Procesamiento de documentos Word
         docx_medica_bytes = procesar_docx(plantilla_medica, variables)
