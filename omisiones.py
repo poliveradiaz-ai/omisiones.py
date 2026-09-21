@@ -463,7 +463,7 @@ if archivo:
     
         'fecha_corte': fecha_corte,
         'fecha_envio_preliminar': fecha_envio_preliminar,
-        'total_agendadas': total_omisiones_agendadas,
+        'total_agendadas': total_agendadas,
         'total_asignadas': total_asignadas,
         'total_medicos': total_medicos,
         'total_no_medicos': total_no_medicos,
