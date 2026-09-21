@@ -425,12 +425,12 @@ if archivo:
         )
     
     if not plantilla_medica or not plantilla_ley18:
-    st.info(
-           "📌 Por favor, sube ambas plantillas en formato Word (.docx) para poder"
-         " ingresar las fechas y generar los informes."
-     )
+       st.info(
+          "📌 Por favor, sube ambas plantillas en formato Word (.docx) para poder"
+          " ingresar las fechas y generar los informes."
+        )
     else:
-     st.markdown("### 📅 Fechas y Datos del reporte Word")
+       st.markdown("### 📅 Fechas y Datos del reporte Word")
     
      col1, col2, col3 = st.columns(3)
     
