@@ -273,6 +273,61 @@ if archivo:
     df_no_medicos = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "NO_MEDICO"].copy()
     df_proc = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "PROC_DUDOSO"].copy()
 
+
+    # =========================
+    # DATOS PARA DOCUMENTOS WORD
+    # =========================
+    
+    st.markdown("## 📄 Generación de documentos")
+    
+    col_fecha1, col_fecha2 = st.columns(2)
+    
+    with col_fecha1:
+        fecha_corte = st.date_input(
+            "Fecha de corte",
+            format="DD/MM/YYYY"
+        )
+    
+    with col_fecha2:
+        fecha_envio_preliminar = st.date_input(
+            "Fecha de envío preliminar",
+            format="DD/MM/YYYY"
+        )
+    
+    # =========================
+    # PRIMEROS CÁLCULOS
+    # =========================
+    
+    # Total de omisiones asignadas
+    total_omisiones_asignadas = len(df_asignadas)
+    
+    # Total de omisiones agendadas
+    # Corresponde al total de filas de la Hoja 1
+    total_omisiones_agendadas = len(hoja1)
+    
+    # =========================
+    # MOSTRAR RESULTADOS
+    # =========================
+    
+    st.markdown("### 📊 Datos calculados")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric(
+            "Total omisiones asignadas",
+            total_omisiones_asignadas
+        )
+    
+    with col2:
+        st.metric(
+            "Total omisiones agendadas",
+            total_omisiones_agendadas
+        )
+
+
+
+
     df_medicos["OMISIONES"] = 1
     df_no_medicos["OMISIONES"] = 1
 
