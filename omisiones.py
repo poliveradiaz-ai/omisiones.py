@@ -439,12 +439,12 @@ if archivo:
           "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
         )
     
-     with col2:
+    with col2:
        fecha_envio_preliminar = st.date_input(
           "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
         )
     
-     with col3:
+    with col3:
        meses = {
               1: "ENERO",
               2: "FEBRERO",
