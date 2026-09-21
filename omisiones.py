@@ -74,7 +74,7 @@ if archivo:
     especialidades = dict(
         zip(
             hoja2[col_h2_prof].astype(str).str.strip().str.upper(),
-            hoja2[col_h2_esp].astype(str).str.banda()     )
+            hoja2[col_h2_esp].astype(str).str.strip()     )
         )
 
 
