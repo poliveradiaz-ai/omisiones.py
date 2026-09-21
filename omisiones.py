@@ -460,20 +460,20 @@ if archivo:
               12: "DICIEMBRE",
           }
     
-          mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
+       mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
     
-          st.text_input("Mes de corte", value=mes_corte, disabled=True)
+       st.text_input("Mes de corte", value=mes_corte, disabled=True)
     
-        variables = {
-            "{{fecha_corte}}": fecha_corte.strftime("%d/%m/%Y"),
-            "{{fecha_envio_preliminar}}": fecha_envio_preliminar.strftime(
-                "%d/%m/%Y"
-            ),
-            "{{mes_corte}}": mes_corte,
-            "{{total_agendadas}}": str(total_agendadas),
-            "{{total_omisiones}}": str(total_omisiones),
-            "{{total_medicos}}": str(total_medicos),
-            "{{total_no_medicos}}": str(total_no_medicos),
+    variables = {
+       "{{fecha_corte}}": fecha_corte.strftime("%d/%m/%Y"),
+       "{{fecha_envio_preliminar}}": fecha_envio_preliminar.strftime(
+             "%d/%m/%Y"
+        ),
+        "{{mes_corte}}": mes_corte,
+        "{{total_agendadas}}": str(total_agendadas),
+        "{{total_omisiones}}": str(total_omisiones),
+         "{{total_medicos}}": str(total_medicos),
+         "{{total_no_medicos}}": str(total_no_medicos),
         }
     
         def procesar_docx(file, datos_reemplazo):
