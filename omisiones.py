@@ -3,6 +3,8 @@ import pandas as pd
 from io import BytesIO
 import plotly.express as px
 from docx import Document
+from docxtpl import DocxTemplate
+
 
 st.set_page_config(
     page_title="Analizador de Horas Médicas",
@@ -679,127 +681,87 @@ if archivo:
         file_name="resultado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+    
+
     # =========================
-    # GENERAR DOCUMENTOS WORD
-    # =========================
-    
-    def reemplazar_variables_word(archivo_word, contexto):
-    
-        documento = Document(archivo_word)
-    
-        # -------------------------
-        # PÁRRAFOS
-        # -------------------------
-    
-        for parrafo in documento.paragraphs:
-    
-            for clave, valor in contexto.items():
-    
-                marcador = "{{ " + clave + " }}"
-    
-                if marcador in parrafo.text:
-    
-                    parrafo.text = parrafo.text.replace(
-                        marcador,
-                        str(valor)
-                    )
-    
-        # -------------------------
-        # TABLAS
-        # -------------------------
-    
-        for tabla in documento.tables:
-    
-            for fila in tabla.rows:
-    
-                for celda in fila.cells:
-    
-                    for parrafo in celda.paragraphs:
-    
-                        for clave, valor in contexto.items():
-    
-                            marcador = "{{ " + clave + " }}"
-    
-                            if marcador in parrafo.text:
-    
-                                parrafo.text = parrafo.text.replace(
-                                    marcador,
-                                    str(valor)
-                                )
-    
-        # -------------------------
-        # GUARDAR EN MEMORIA
-        # -------------------------
-    
-        salida_word = BytesIO()
-    
-        documento.save(salida_word)
-    
-        salida_word.seek(0)
-    
-        return salida_word
-    
-    
-    # =========================
-    # BOTONES DE GENERACIÓN
-    # =========================
-    
-    st.markdown("### 📥 Documentos completados")
-    
-    col_word1, col_word2 = st.columns(2)
-    
-    # -------------------------
-    # LEY MÉDICA
-    # -------------------------
-    
-    with col_word1:
-    
-        if plantilla_ley_medica is not None:
-    
-            documento_medico = reemplazar_variables_word(
-                plantilla_ley_medica,
-                contexto
-            )
-    
-            st.download_button(
-                label="📥 Descargar Word Ley Médica",
-                data=documento_medico.getvalue(),
-                file_name="Informe_Ley_Medica.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="descargar_ley_medica"
-            )
-    
-        else:
-    
-            st.info(
-                "Sube la plantilla Word de Ley Médica."
-            )
-    
-    
-    # -------------------------
-    # LEY 18
-    # -------------------------
-    
-    with col_word2:
-    
-        if plantilla_ley_18 is not None:
-    
-            documento_ley18 = reemplazar_variables_word(
-                plantilla_ley_18,
-                contexto
-            )
-    
-            st.download_button(
-                label="📥 Descargar Word Ley 18",
-                data=documento_ley18.getvalue(),
-                file_name="Informe_Ley_18.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="descargar_ley_18"
-            )
-    
-        else:
-    
-            st.info(
-                "Sube la plantilla Word de Ley 18."
-            )
-    
+# GENERAR DOCUMENTOS WORD
+# =========================
+
+def generar_word(plantilla, contexto):
+
+    documento = DocxTemplate(plantilla)
+
+    documento.render(contexto)
+
+    salida = BytesIO()
+
+    documento.save(salida)
+
+    salida.seek(0)
+
+    return salida
+
+
+# =========================
+# DESCARGAS WORD
+# =========================
+
+st.markdown("### 📥 Documentos completados")
+
+col_word1, col_word2 = st.columns(2)
+
+# =========================
+# LEY MÉDICA
+# =========================
+
+with col_word1:
+
+    if plantilla_ley_medica is not None:
+
+        documento_medico = generar_word(
+            plantilla_ley_medica,
+            contexto
+        )
+
+        st.download_button(
+            label="📥 Descargar Word Ley Médica",
+            data=documento_medico.getvalue(),
+            file_name="Informe_Ley_Medica.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key="descargar_ley_medica"
+        )
+
+    else:
+
+        st.info(
+            "Primero sube la plantilla Word de Ley Médica."
+        )
+
+
+# =========================
+# LEY 18
+# =========================
+
+with col_word2:
+
+    if plantilla_ley_18 is not None:
+
+        documento_ley18 = generar_word(
+            plantilla_ley_18,
+            contexto
+        )
+
+        st.download_button(
+            label="📥 Descargar Word Ley 18",
+            data=documento_ley18.getvalue(),
+            file_name="Informe_Ley_18.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key="descargar_ley_18"
+        )
+
+    else:
+
+        st.info(
+            "Primero sube la plantilla Word de Ley 18."
+        )
+
