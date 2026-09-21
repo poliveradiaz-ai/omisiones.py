@@ -497,27 +497,27 @@ if archivo:
          return out.getvalue()
     
         # Procesamiento de documentos Word
-        docx_medica_bytes = procesar_docx(plantilla_medica, variables)
-        docx_ley18_bytes = procesar_docx(plantilla_ley18, variables)
+    docx_medica_bytes = procesar_docx(plantilla_medica, variables)
+    docx_ley18_bytes = procesar_docx(plantilla_ley18, variables)
     
-        col_btn1, col_btn2 = st.columns(2)
+    col_btn1, col_btn2 = st.columns(2)
     
-        with col_btn1:
-          st.download_button(
-              "Descargar Informe Ley Médica",
-              data=docx_medica_bytes,
-              file_name="informe_ley_medica.docx",
-              mime=(
-                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              ),
-          )
+    with col_btn1:
+      st.download_button(
+          "Descargar Informe Ley Médica",
+          data=docx_medica_bytes,
+          file_name="informe_ley_medica.docx",
+          mime=(
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ),
+      )
     
-        with col_btn2:
-          st.download_button(
-              "Descargar Informe Ley 18",
-              data=docx_ley18_bytes,
-              file_name="informe_ley_18.docx",
-              mime=(
-                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              ),
-          )
+    with col_btn2:
+      st.download_button(
+          "Descargar Informe Ley 18",
+          data=docx_ley18_bytes,
+          file_name="informe_ley_18.docx",
+          mime=(
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ),
+       )
