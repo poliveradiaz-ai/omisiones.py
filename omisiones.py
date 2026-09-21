@@ -406,56 +406,118 @@ if archivo:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-    st.markdown("## 📅 Datos del reporte")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        fecha_corte = st.date_input(
-            "Fecha de corte",
-            value=date.today(),
-            format="DD/MM/YYYY"
-        )
-    
-    with col2:
-        fecha_envio_preliminar = st.date_input(
-            "Fecha de envío preliminar",
-            value=date.today(),
-            format="DD/MM/YYYY"
-        )
-    
-    with col3:
-        meses = {
-            1: "ENERO",
-            2: "FEBRERO",
-            3: "MARZO",
-            4: "ABRIL",
-            5: "MAYO",
-            6: "JUNIO",
-            7: "JULIO",
-            8: "AGOSTO",
-            9: "SEPTIEMBRE",
-            10: "OCTUBRE",
-            11: "NOVIEMBRE",
-            12: "DICIEMBRE"
-        }
-    
-        mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
-    
-        st.text_input(
-            "Mes de corte",
-            value=mes_corte,
-            disabled=True
-        )
+  # =========================================================
+  # SECCIÓN SEPARADA: GENERACIÓN DE REPORTES EN WORD
+  # =========================================================
+  st.markdown("---")
+  st.markdown("## 📄 Generación de Informes Word")
 
-        variables = {
-            "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
-            "fecha_envio_preliminar": fecha_envio_preliminar.strftime("%d/%m/%Y"),
-            "mes_corte": mes_corte,
-        
-            "total_agendadas": total_agendadas,
-            "total_omisiones": total_omisiones,
-        
-            "total_medicos": total_medicos,
-            "total_no_medicos": total_no_medicos,
-        }
+  col_plantilla1, col_plantilla2 = st.columns(2)
+
+  with col_plantilla1:
+    plantilla_medica = st.file_uploader(
+        "Subir Plantilla Ley Médica (.docx)", type=["docx"]
+    )
+
+  with col_plantilla2:
+    plantilla_ley18 = st.file_uploader(
+        "Subir Plantilla Ley 18 / No Médicos (.docx)", type=["docx"]
+    )
+
+  if not plantilla_medica or not plantilla_ley18:
+    st.info(
+        "📌 Por favor, sube ambas plantillas en formato Word (.docx) para poder"
+        " ingresar las fechas y generar los informes."
+    )
+  else:
+    st.markdown("### 📅 Fechas y Datos del reporte Word")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+      fecha_corte = st.date_input(
+          "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
+      )
+
+    with col2:
+      fecha_envio_preliminar = st.date_input(
+          "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
+      )
+
+    with col3:
+      meses = {
+          1: "ENERO",
+          2: "FEBRERO",
+          3: "MARZO",
+          4: "ABRIL",
+          5: "MAYO",
+          6: "JUNIO",
+          7: "JULIO",
+          8: "AGOSTO",
+          9: "SEPTIEMBRE",
+          10: "OCTUBRE",
+          11: "NOVIEMBRE",
+          12: "DICIEMBRE",
+      }
+
+      mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
+
+      st.text_input("Mes de corte", value=mes_corte, disabled=True)
+
+    variables = {
+        "{{fecha_corte}}": fecha_corte.strftime("%d/%m/%Y"),
+        "{{fecha_envio_preliminar}}": fecha_envio_preliminar.strftime(
+            "%d/%m/%Y"
+        ),
+        "{{mes_corte}}": mes_corte,
+        "{{total_agendadas}}": str(total_agendadas),
+        "{{total_omisiones}}": str(total_omisiones),
+        "{{total_medicos}}": str(total_medicos),
+        "{{total_no_medicos}}": str(total_no_medicos),
+    }
+
+    def procesar_docx(file, datos_reemplazo):
+      doc = Document(file)
+
+      for p in doc.paragraphs:
+        for clave, valor in datos_reemplazo.items():
+          if clave in p.text:
+            p.text = p.text.replace(clave, valor)
+
+      for t in doc.tables:
+        for row in t.rows:
+          for cell in row.cells:
+            for p in cell.paragraphs:
+              for clave, valor in datos_reemplazo.items():
+                if clave in p.text:
+                  p.text = p.text.replace(clave, valor)
+
+      out = BytesIO()
+      doc.save(out)
+      return out.getvalue()
+
+    # Procesamiento de documentos Word
+    docx_medica_bytes = procesar_docx(plantilla_medica, variables)
+    docx_ley18_bytes = procesar_docx(plantilla_ley18, variables)
+
+    col_btn1, col_btn2 = st.columns(2)
+
+    with col_btn1:
+      st.download_button(
+          "Descargar Informe Ley Médica",
+          data=docx_medica_bytes,
+          file_name="informe_ley_medica.docx",
+          mime=(
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ),
+      )
+
+    with col_btn2:
+      st.download_button(
+          "Descargar Informe Ley 18",
+          data=docx_ley18_bytes,
+          file_name="informe_ley_18.docx",
+          mime=(
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ),
+      )
