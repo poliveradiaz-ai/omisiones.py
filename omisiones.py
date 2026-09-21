@@ -219,7 +219,7 @@ if archivo:
         # Si el profesional aparece en Hoja 3,
         # SIEMPRE será considerado NO MÉDICO,
         # aunque su agrupación diga MEDICO.
-        if prof in no_medicos_hoja3:============        # ==============================
+        if prof in no_medicos_hoja3:
             devolver "NO_MEDICO"
 
 
