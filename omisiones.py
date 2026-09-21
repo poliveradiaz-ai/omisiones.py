@@ -415,9 +415,9 @@ if archivo:
     col_plantilla1, col_plantilla2 = st.columns(2)
     
     with col_plantilla1:
-     plantilla_medica = st.file_uploader(
-        "Subir Plantilla Ley Médica (.docx)", type=["docx"]
-      )
+       plantilla_medica = st.file_uploader(
+          "Subir Plantilla Ley Médica (.docx)", type=["docx"]
+        )
     
      with col_plantilla2:
      plantilla_ley18 = st.file_uploader(
