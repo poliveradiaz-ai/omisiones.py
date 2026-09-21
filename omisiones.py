@@ -400,12 +400,10 @@ if archivo:
     # CALCULOS PARA DOCUMENTOS
     # =========================
 
-    # Total de omisiones asignadas
-    total_omisiones_asignadas = total_asignadas
 
-    # Total de omisiones agendadas
+    # Total de horas agendadas
     # Corresponde al total de filas de la Hoja 1
-    total_omisiones_agendadas = len(hoja1)
+    total_agendadas = len(hoja1)
 
     # =========================
     # MOSTRAR CALCULOS
@@ -418,15 +416,15 @@ if archivo:
     with col1:
 
         st.metric(
-            "Total omisiones asignadas",
-            total_omisiones_asignadas
+            "Total asignadas",
+            total_asignadas
         )
 
     with col2:
 
         st.metric(
-            "Total omisiones agendadas",
-            total_omisiones_agendadas
+            "Total horas agendadas",
+            total_agendadas
         )
 
     # =========================
@@ -465,8 +463,8 @@ if archivo:
     
         'fecha_corte': fecha_corte,
         'fecha_envio_preliminar': fecha_envio_preliminar,
-        'total_omisiones_agendadas': total_omisiones_agendadas,
-        'total_omisiones_asignadas': total_omisiones_asignadas,
+        'total_agendadas': total_omisiones_agendadas,
+        'total_asignadas': total_asignadas,
         'total_medicos': total_medicos,
         'total_no_medicos': total_no_medicos,
     
