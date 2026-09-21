@@ -412,40 +412,40 @@ if archivo:
     st.markdown("---")
     st.markdown("## 📄 Generación de Informes Word")
     
-      col_plantilla1, col_plantilla2 = st.columns(2)
+    col_plantilla1, col_plantilla2 = st.columns(2)
     
-      with col_plantilla1:
-        plantilla_medica = st.file_uploader(
-            "Subir Plantilla Ley Médica (.docx)", type=["docx"]
-        )
+    with col_plantilla1:
+     plantilla_medica = st.file_uploader(
+        "Subir Plantilla Ley Médica (.docx)", type=["docx"]
+      )
     
-      with col_plantilla2:
-        plantilla_ley18 = st.file_uploader(
-            "Subir Plantilla Ley 18 / No Médicos (.docx)", type=["docx"]
-        )
+     with col_plantilla2:
+     plantilla_ley18 = st.file_uploader(
+          "Subir Plantilla Ley 18 / No Médicos (.docx)", type=["docx"]
+     )
     
-      if not plantilla_medica or not plantilla_ley18:
-        st.info(
-            "📌 Por favor, sube ambas plantillas en formato Word (.docx) para poder"
-            " ingresar las fechas y generar los informes."
-        )
-      else:
-        st.markdown("### 📅 Fechas y Datos del reporte Word")
+    if not plantilla_medica or not plantilla_ley18:
+    st.info(
+           "📌 Por favor, sube ambas plantillas en formato Word (.docx) para poder"
+         " ingresar las fechas y generar los informes."
+     )
+    else:
+     st.markdown("### 📅 Fechas y Datos del reporte Word")
     
-        col1, col2, col3 = st.columns(3)
+     col1, col2, col3 = st.columns(3)
     
-        with col1:
-          fecha_corte = st.date_input(
-              "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
-          )
+    with col1:
+         fecha_corte = st.date_input(
+           "Fecha de corte", value=date.today(), format="DD/MM/YYYY"
+      )
     
-        with col2:
-          fecha_envio_preliminar = st.date_input(
-              "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
-          )
+     with col2:
+      fecha_envio_preliminar = st.date_input(
+            "Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY"
+         )
     
-        with col3:
-          meses = {
+     with col3:
+         meses = {
               1: "ENERO",
               2: "FEBRERO",
               3: "MARZO",
