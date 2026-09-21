@@ -1,331 +1,302 @@
 import streamlit as st
 import pandas as pd
+from docxtpl import DocxTemplate
+import unicodedata
 from io import BytesIO
-from docx import Document
-from datetime import date
+import traceback
 
-st.set_page_config(
-    page_title="Analizador de Horas Médicas",
-    layout="wide"
-)
+st.set_page_config(page_title="Reporte Omisiones", layout="wide")
 
-st.title("Reporte de Omisiones")
+st.title("📊 Generador de Reportes de Omisiones Médicas")
 
-archivo = st.file_uploader("Sube archivo Excel", type=["xlsx"])
+st.write("Sube los archivos base y opcionalmente las plantillas")
 
-# =========================================================
-# FUNCIÓN DE LECTURA Y PROCESAMIENTO (CON CACHÉ)
-# =========================================================
-# @st.cache_data evita que Streamlit vuelva a procesar el Excel
-# al interactuar con las fechas u otros controles.
-@st.cache_data(show_spinner="Procesando Excel...")
-def procesar_excel(archivo_bytes):
-    hoja1 = pd.read_excel(archivo_bytes, sheet_name=0)
-    hoja2 = pd.read_excel(archivo_bytes, sheet_name=1)
-    hoja3 = pd.read_excel(archivo_bytes, sheet_name=2)
+# =========================
+# ARCHIVOS BASE
+# =========================
+st.markdown("## 📂 Archivos base")
 
-    hoja1.columns = hoja1.columns.str.strip().str.upper()
-    hoja2.columns = hoja2.columns.str.strip().str.upper()
-    hoja3.columns = hoja3.columns.str.strip().str.upper()
+lp_file = st.file_uploader("📄 Lista de Espera (.xlsx)", type=["xlsx"])
+datos_file = st.file_uploader("📄 Datos RCE Especialidades (.xlsx)", type=["xlsx"])
+medicos_file = st.file_uploader("📄 Nómina Médicos (.xlsx)", type=["xlsx"])
 
-    col_h1_prof = "NOMBRE PROFESIONAL"
-    col_h1_agr = "AGRUPACION"
-    col_h1_estado = "ESTADO HORA"
+st.divider()
 
-    col_h2_prof = "PROFESIONAL"
-    col_h2_esp = "ESPECIALIDAD"
+# =========================
+# FUNCIONES DE PROCESAMIENTO
+# =========================
+def normalizar_texto(texto):
+    if pd.isna(texto):
+        return ""
+    texto = str(texto).strip().upper()
+    texto = unicodedata.normalize('NFD', texto)
+    texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
+    return texto
 
-    col_h3_prof = "PROFESIONAL LEY 18"
+def limpiar_rut_definitivo(rut):
+    rut = str(rut).strip()
+    if "-" in rut:
+        rut = rut.split("-")[0]
+    return rut.replace(".", "")
 
-    for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
-        if col not in hoja1.columns:
-            return None, f"Falta columna en Hoja 1: {col}"
+def agregar_totales_por_especialidad(tabla):
+    resultado = []
+    for especialidad, grupo in tabla.groupby('Especialidad', sort=False):
+        for _, fila in grupo.iterrows():
+            resultado.append({
+                'Especialidad': fila['Especialidad'],
+                'Funcionario': fila['Funcionario'],
+                'total': fila['total'],
+                'es_total': False
+            })
+        
+        total_especialidad = grupo['total'].sum()
+        resultado.append({
+            'Especialidad': f'TOTAL {especialidad}',
+            'Funcionario': '',
+            'total': total_especialidad,
+            'es_total': True
+        })
 
-    if col_h2_prof not in hoja2.columns or col_h2_esp not in hoja2.columns:
-        return None, "Hoja 2 inválida"
+    total_general = tabla['total'].sum()
+    resultado.append({
+        'Especialidad': 'TOTAL GENERAL',
+        'Funcionario': '',
+        'total': total_general,
+        'es_total': True
+    })
 
-    if col_h3_prof not in hoja3.columns:
-        return None, "Hoja 3 inválida"
+    return resultado
 
-    df_asignadas = hoja1[
-        hoja1[col_h1_estado].astype(str).str.upper().eq("ASIGNADA")
-    ].copy()
+def agregar_total_general(tabla, columna_total):
+    resultado = tabla.to_dict('records')
+    total_general = tabla[columna_total].sum()
+    resultado.append({
+        'Especialidad': 'TOTAL GENERAL',
+        columna_total: total_general
+    })
+    return resultado
 
-    total_agendadas = len(hoja1)
-    total_omisiones = len(df_asignadas)
+# =========================
+# PLANTILLAS WORD
+# =========================
+col1, col2 = st.columns(2)
 
-    medicos_hoja2 = set(hoja2[col_h2_prof].astype(str).str.strip().str.upper())
-    no_medicos_hoja3 = set(hoja3[col_h3_prof].astype(str).str.strip().str.upper())
+with col1:
+    st.markdown("📄 Plantilla Informe 1")
+    word_file = st.file_uploader("Plantilla 1 (.docx)", type=["docx"], key="w1")
 
-    especialidades = dict(
-        zip(
-            hoja2[col_h2_prof].astype(str).str.strip().str.upper(),
-            hoja2[col_h2_esp].astype(str).str.strip()
-        )
-    )
+with col2:
+    st.markdown("📄 Plantilla Informe 2")
+    preliminar2_word_file = st.file_uploader("Plantilla 2 (.docx)", type=["docx"], key="w2")
 
-    agrup_medicos = {
-        "MEDICO APS", "MEDICO ESPECIALISTA", "ODONTOLOGIA APS",
-        "ODONTOLOGIA ESPECIALIDADES", "QUIMICO FARMACEUTICO"
-    }
+st.markdown("## 📅 Fechas del informe")
 
-    agrup_no_medicos = {
-        "TERAPEUTA OCUPACIONAL", "PSICOLOGIA", "ENFERMERA(O)",
-        "ASISTENTE SOCIAL", "NUTRICIONISTA", "TECNOLOGO MEDICO",
-        "FONOAUDIOLOGO", "MATRON(A)", "KINESIOLOGO"
-    }
+col_fecha1, col_fecha2, col_fecha3 = st.columns(3)
 
-    tipos = []
-    especialidad_final = []
-    desconocidos_proc = []
+with col_fecha1:
+    fecha_corte = st.date_input("Fecha de corte")
 
-    for _, fila in df_asignadas.iterrows():
-        prof = str(fila[col_h1_prof]).strip().upper()
-        agr = str(fila[col_h1_agr]).strip().upper()
+with col_fecha2:
+    fecha_inf_preliminar = st.date_input("Fecha envío informe preliminar")
 
-        if prof in no_medicos_hoja3:
-            tipos.append("NO_MEDICO")
-            especialidad_final.append(None)
-        elif agr in agrup_medicos:
-            tipos.append("MEDICO")
-            especialidad_final.append(especialidades.get(prof, "SIN ESPECIALIDAD"))
-        elif agr in agrup_no_medicos:
-            tipos.append("NO_MEDICO")
-            especialidad_final.append(None)
-        elif agr == "PROCEDIMIENTO":
-            if prof in medicos_hoja2:
-                tipos.append("MEDICO")
-                especialidad_final.append(especialidades.get(prof, "SIN ESPECIALIDAD"))
-            elif prof in no_medicos_hoja3:
-                tipos.append("NO_MEDICO")
-                especialidad_final.append(None)
-            else:
-                tipos.append("PROC_DUDOSO")
-                especialidad_final.append(None)
-                desconocidos_proc.append(prof)
-        else:
-            tipos.append("PROC_DUDOSO")
-            especialidad_final.append(None)
-            desconocidos_proc.append(prof)
-
-    df_asignadas["TIPO_PROFESIONAL"] = tipos
-    df_asignadas["ESPECIALIDAD_FINAL"] = especialidad_final
-
-    return {
-        "df_asignadas": df_asignadas,
-        "total_agendadas": total_agendadas,
-        "total_omisiones": total_omisiones,
-        "medicos_hoja2": medicos_hoja2,
-        "no_medicos_hoja3": no_medicos_hoja3,
-        "especialidades": especialidades,
-        "agrup_medicos": agrup_medicos,
-        "agrup_no_medicos": agrup_no_medicos,
-        "desconocidos_proc": desconocidos_proc,
-        "col_h1_prof": col_h1_prof,
-        "col_h1_agr": col_h1_agr
-    }, None
-
-def procesar_docx(file, datos_reemplazo):
-    doc = Document(file)
-    for p in doc.paragraphs:
-        for clave, valor in datos_reemplazo.items():
-            if clave in p.text:
-                p.text = p.text.replace(clave, valor)
-
-    for t in doc.tables:
-        for row in t.rows:
-            for cell in row.cells:
-                for p in cell.paragraphs:
-                    for clave, valor in datos_reemplazo.items():
-                        if clave in p.text:
-                            p.text = p.text.replace(clave, valor)
-
-    out = BytesIO()
-    doc.save(out)
-    return out.getvalue()
-
-
-# =========================================================
-# EJECUCIÓN PRINCIPAL
-# =========================================================
-if archivo:
-    res, err = procesar_excel(archivo)
-    
-    if err:
-        st.error(err)
-        st.stop()
-
-    df_asignadas = res["df_asignadas"]
-    total_agendadas = res["total_agendadas"]
-    total_omisiones = res["total_omisiones"]
-    medicos_hoja2 = res["medicos_hoja2"].copy()
-    no_medicos_hoja3 = res["no_medicos_hoja3"].copy()
-    especialidades = res["especialidades"].copy()
-    agrup_medicos = res["agrup_medicos"]
-    agrup_no_medicos = res["agrup_no_medicos"]
-    desconocidos_proc = res["desconocidos_proc"]
-    col_h1_prof = res["col_h1_prof"]
-    col_h1_agr = res["col_h1_agr"]
-
-    # --- REVISIÓN PROCEDIMIENTO ---
-    st.subheader("🔎 Revisión PROCEDIMIENTO")
-    nuevos_medicos = []
-    nuevos_no_medicos = []
-
-    for prof in sorted(set(desconocidos_proc)):
-        st.warning(f"{prof} no está en Hoja 2 ni Hoja 3")
-        tipo = st.radio(f"{prof} es:", ["No Médico", "Médico"], key=prof)
-
-        if tipo == "Médico":
-            esp = st.text_input(f"Especialidad {prof}", key=f"esp_{prof}")
-            if esp:
-                nuevos_medicos.append({"PROFESIONAL": prof, "ESPECIALIDAD": esp})
-                medicos_hoja2.add(prof)
-                especialidades[prof] = esp
-        else:
-            nuevos_no_medicos.append(prof)
-            no_medicos_hoja3.add(prof)
-
-    # --- RECLASIFICACIÓN FINAL ---
-    def clasificar(prof, agr):
-        prof = str(prof).strip().upper()
-        agr = str(agr).strip().upper()
-
-        if prof in no_medicos_hoja3:
-            return "NO_MEDICO"
-        if agr in agrup_medicos:
-            return "MEDICO"
-        if agr in agrup_no_medicos:
-            return "NO_MEDICO"
-        if agr == "PROCEDIMIENTO":
-            if prof in medicos_hoja2:
-                return "MEDICO"
-            if prof in no_medicos_hoja3:
-                return "NO_MEDICO"
-            return "PROC_DUDOSO"
-        return "PROC_DUDOSO"
-
-    df_asignadas["TIPO_PROFESIONAL"] = df_asignadas.apply(
-        lambda r: clasificar(r[col_h1_prof], r[col_h1_agr]), axis=1
-    )
-
-    df_asignadas["ESPECIALIDAD_FINAL"] = df_asignadas.apply(
-        lambda r: (
-            especialidades.get(str(r[col_h1_prof]).strip().upper(), "SIN ESPECIALIDAD")
-            if r["TIPO_PROFESIONAL"] == "MEDICO" else None
-        ), axis=1
-    )
-
-    # --- BASES Y TABLAS ---
-    df_medicos = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "MEDICO"].copy()
-    df_no_medicos = df_asignadas[df_asignadas["TIPO_PROFESIONAL"] == "NO_MEDICO"].copy()
-
-    st.markdown("## 📊 Resumen General de Omisiones")
-    total_asignadas = len(df_asignadas)
-    total_medicos = len(df_medicos)
-    total_no_medicos = len(df_no_medicos)
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Omisiones (Asignadas)", total_asignadas)
-    col2.metric("Omisiones Médicos", total_medicos)
-    col3.metric("Omisiones No Médicos", total_no_medicos)
-
-    tabla_resumen_medicos = df_medicos.groupby("ESPECIALIDAD_FINAL").size().reset_index(name="TOTAL ASIGNADAS")
-    tabla_medicos_detalle = df_medicos.groupby(["ESPECIALIDAD_FINAL", col_h1_prof]).size().reset_index(name="TOTAL ASIGNADAS").rename(columns={"ESPECIALIDAD_FINAL": "ESPECIALIDAD", col_h1_prof: "NOMBRE PROFESIONAL"})
-    tabla_medicos_pacientes = df_medicos.groupby(["ESPECIALIDAD_FINAL","RUT PROFESIONAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"], dropna=False).size().reset_index(name="OMISIONES").rename(columns={"ESPECIALIDAD_FINAL": "ESPECIALIDAD", col_h1_prof: "NOMBRE PROFESIONAL"})
-
-    tabla_resumen_no_medicos = df_no_medicos.groupby("POLICLINICO").size().reset_index(name="TOTAL ASIGNADAS")
-    tabla_no_medicos_detalle = df_no_medicos.groupby([col_h1_prof, "POLICLINICO"]).size().reset_index(name="TOTAL ASIGNADAS").rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-    tabla_no_medicos_pacientes = df_no_medicos.groupby(["POLICLINICO","RUT PROFESIONAL", col_h1_prof, "RUT PACIENTE", "NOMBRE PACIENTE", "FECHA"]).size().reset_index(name="TOTAL ASIGNADAS").rename(columns={col_h1_prof: "NOMBRE PROFESIONAL"})
-
-    salida = BytesIO()
-    with pd.ExcelWriter(salida, engine="xlsxwriter") as writer:
-        tabla_resumen_medicos.to_excel(writer, sheet_name="Resumen Medicos", index=False)
-        tabla_medicos_detalle.to_excel(writer, sheet_name="Detalle Medicos", index=False)
-        tabla_medicos_pacientes.to_excel(writer, sheet_name="Pacientes Medicos", index=False)
-        tabla_resumen_no_medicos.to_excel(writer, sheet_name="Resumen No Medicos", index=False)
-        tabla_no_medicos_detalle.to_excel(writer, sheet_name="Detalle No Medicos", index=False)
-        tabla_no_medicos_pacientes.to_excel(writer, sheet_name="Pacientes No Medicos", index=False)
-
-        if nuevos_medicos:
-            pd.DataFrame(nuevos_medicos).to_excel(writer, sheet_name="Nuevos Medicos", index=False)
-
-    st.download_button(
-        "Descargar Excel",
-        data=salida.getvalue(),
-        file_name="resultado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    # =========================================================
-    # GENERACIÓN DE REPORTES WORD (DENTRO DE UN FORMULARIO)
-    # =========================================================
-    st.markdown("---")
-    st.markdown("## 📄 Generación de Informes Word")
-
-    col_plantilla1, col_plantilla2 = st.columns(2)
-    with col_plantilla1:
-        plantilla_medica = st.file_uploader("Subir Plantilla Ley Médica (.docx)", type=["docx"])
-    with col_plantilla2:
-        plantilla_ley18 = st.file_uploader("Subir Plantilla Ley 18 / No Médicos (.docx)", type=["docx"])
-
-    if not plantilla_medica or not plantilla_ley18:
-        st.info("📌 Por favor, sube ambas plantillas en formato Word (.docx) para ingresar las fechas y generar informes.")
+with col_fecha3:
+    incluir_fecha_envio_final = st.checkbox("¿Ingresar fecha de envío del informe final?")
+    if incluir_fecha_envio_final:
+        fecha_envio_informe_final = st.date_input("Fecha de envío del informe final")
     else:
-        # Envolvemos las fechas en un st.form para aislar la interacción
-        with st.form("form_fechas_word"):
-            st.markdown("### 📅 Fechas y Datos del reporte Word")
-            col1, col2, col3 = st.columns(3)
+        fecha_envio_informe_final = None
 
-            with col1:
-                fecha_corte = st.date_input("Fecha de corte", value=date.today(), format="DD/MM/YYYY")
+# =========================
+# INIT SESSION STATE
+# =========================
+if "informe1" not in st.session_state:
+    st.session_state["informe1"] = None
 
-            with col2:
-                fecha_envio_preliminar = st.date_input("Fecha de envío preliminar", value=date.today(), format="DD/MM/YYYY")
+if "informe2" not in st.session_state:
+    st.session_state["informe2"] = None
 
-            with col3:
-                meses = {
-                    1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL",
-                    5: "MAYO", 6: "JUNIO", 7: "JULIO", 8: "AGOSTO",
-                    9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
-                }
-                mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
-                st.text_input("Mes de corte", value=mes_corte, disabled=True)
+if "reporte_excel" not in st.session_state:
+    st.session_state["reporte_excel"] = None
 
-            btn_procesar_word = st.form_submit_button("🚀 Generar Documentos Word")
+# =========================
+# BOTÓN GENERAR REPORTE
+# =========================
+if st.button("🚀 Generar Reporte"):
 
-        if btn_procesar_word:
-            variables = {
-                "{{fecha_corte}}": fecha_corte.strftime("%d/%m/%Y"),
-                "{{fecha_envio_preliminar}}": fecha_envio_preliminar.strftime("%d/%m/%Y"),
-                "{{mes_corte}}": mes_corte,
-                "{{total_agendadas}}": str(total_agendadas),
-                "{{total_omisiones}}": str(total_omisiones),
-                "{{total_medicos}}": str(total_medicos),
-                "{{total_no_medicos}}": str(total_no_medicos),
+    if lp_file and datos_file and medicos_file:
+        try:
+            # 1. Cargar datos desde los Excel
+            lp = pd.read_excel(lp_file, sheet_name="SIGTE_Salida")
+            rce = pd.read_excel(datos_file, sheet_name="NOMINA CUADRATURA (REM7) SIN CO")
+            medicos = pd.read_excel(medicos_file, sheet_name="Nomina Médico")
+
+            # Renombrar columnas RCE
+            if 'Rut' in rce.columns and 'Rut.1' in rce.columns:
+                rce = rce.rename(columns={'Rut': 'Rut Paciente', 'Rut.1': 'Rut Funcionario'})
+
+            # Construir nombre completo del funcionario
+            rce['Funcionario'] = (
+                rce['Nombres'].fillna('').astype(str) + ' ' +
+                rce['Apellido Pat'].fillna('').astype(str) + ' ' +
+                rce['Apellido Mat'].fillna('').astype(str)
+            ).str.replace(r'\s+', ' ', regex=True).str.strip()
+
+            # Normalizaciones para cruces
+            lp['rut_puente'] = lp['RUN/RUT_PACIENTE'].apply(limpiar_rut_definitivo)
+            rce['rut_puente'] = rce['Rut Paciente'].apply(limpiar_rut_definitivo)
+
+            lp['esp_puente'] = lp['ESPECIALIDAD_DESTINO'].apply(normalizar_texto)
+            rce['esp_puente'] = rce['Especialidad'].apply(normalizar_texto)
+
+            rce['actividad_norm'] = rce['Actividad'].apply(normalizar_texto)
+
+            # Filtrar RCE por CONSULTA NUEVA
+            rce_cn = rce[rce['actividad_norm'] == 'CONSULTA NUEVA'].copy()
+
+            # Merge Lista de Espera x RCE
+            lp_merged = pd.merge(
+                lp,
+                rce_cn[['rut_puente', 'esp_puente', 'Rut Funcionario', 'Funcionario', 'Fecha Atencion']],
+                on=['rut_puente', 'esp_puente'],
+                how='left'
+            )
+
+            # Identificar Omisiones (donde no hubo atención en RCE)
+            omisiones = lp_merged[lp_merged['Rut Funcionario'].isna()].copy()
+
+            # Merge con Nómina de Médicos
+            medicos['esp_puente'] = medicos['Especialidad Destino'].apply(normalizar_texto)
+            medicos['rut_doc_puente'] = medicos['Rut'].apply(limpiar_rut_definitivo)
+
+            omisiones = pd.merge(
+                omisiones,
+                medicos[['esp_puente', 'rut_doc_puente', 'Nombre Profesional']],
+                on='esp_puente',
+                how='left'
+            )
+
+            # 2. Resúmenes y métricas
+            total_omisiones = len(omisiones)
+
+            tabla_omisiones_esp = (
+                omisiones.groupby('ESPECIALIDAD_DESTINO')
+                .size()
+                .reset_index(name='cantidad')
+                .sort_values(by='cantidad', ascending=False)
+                .rename(columns={'ESPECIALIDAD_DESTINO': 'Especialidad'})
+            )
+
+            tabla_omisiones_func = (
+                omisiones.groupby(['ESPECIALIDAD_DESTINO', 'Nombre Profesional'])
+                .size()
+                .reset_index(name='total')
+                .rename(columns={'ESPECIALIDAD_DESTINO': 'Especialidad', 'Nombre Profesional': 'Funcionario'})
+                .sort_values(by=['Especialidad', 'total'], ascending=[True, False])
+            )
+
+            # Tablas estructuradas para Word
+            tabla_omisiones_word = agregar_total_general(tabla_omisiones_esp, 'cantidad')
+            tabla_funcionarios_omisiones_word = agregar_totales_por_especialidad(tabla_omisiones_func)
+
+            # Formateo de fechas y meses
+            fecha_corte_str = fecha_corte.strftime("%d/%m/%Y")
+            fecha_inf_preliminar_str = fecha_inf_preliminar.strftime("%d/%m/%Y")
+            fecha_envio_informe_final_str = (
+                fecha_envio_informe_final.strftime("%d/%m/%Y")
+                if fecha_envio_informe_final is not None else ""
+            )
+
+            meses = {
+                1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio",
+                7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
+            }
+            mes_corte = meses[fecha_corte.month]
+
+            # =========================
+            # 📊 GENERAR EXCEL CONSOLIDADO
+            # =========================
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                tabla_omisiones_esp.to_excel(writer, sheet_name='OMISIONES_Especialidad', index=False)
+                tabla_omisiones_func.to_excel(writer, sheet_name='OMISIONES_Funcionario', index=False)
+                omisiones.to_excel(writer, sheet_name='OMISIONES_Detalle', index=False)
+
+            output.seek(0)
+            st.session_state["reporte_excel"] = output.read()
+
+            # =========================
+            # 📝 RENDERIZAR PLANTILLAS WORD (DocxTemplate)
+            # =========================
+            doc = DocxTemplate(word_file) if word_file else None
+            doc2 = DocxTemplate(preliminar2_word_file) if preliminar2_word_file else None
+
+            contexto = {
+                'total_omisiones': total_omisiones,
+                'tabla_omisiones': tabla_omisiones_word,
+                'tabla_funcionarios_omisiones': tabla_funcionarios_omisiones_word,
+                'filas_omisiones': omisiones.to_dict('records'),
+                'fecha_corte': fecha_corte_str,
+                'fecha_envio_preliminar': fecha_inf_preliminar_str,
+                'fecha_envio_informe_final': fecha_envio_informe_final_str,
+                'mes_corte': mes_corte,
             }
 
-            st.session_state["docx_medica_bytes"] = procesar_docx(plantilla_medica, variables)
-            st.session_state["docx_ley18_bytes"] = procesar_docx(plantilla_ley18, variables)
-            st.success("✅ Informes generados correctamente")
+            if doc:
+                doc.render(contexto)
+                buffer1 = BytesIO()
+                doc.save(buffer1)
+                st.session_state["informe1"] = buffer1.getvalue()
 
-        if "docx_medica_bytes" in st.session_state and "docx_ley18_bytes" in st.session_state:
-            col_btn1, col_btn2 = st.columns(2)
+            if doc2:
+                doc2.render(contexto)
+                buffer2 = BytesIO()
+                doc2.save(buffer2)
+                st.session_state["informe2"] = buffer2.getvalue()
 
-            with col_btn1:
-                st.download_button(
-                    "Descargar Informe Ley Médica",
-                    data=st.session_state["docx_medica_bytes"],
-                    file_name="informe_ley_medica.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    key="dl_medica"
-                )
+            st.success("✅ Reporte de omisiones generado correctamente")
 
-            with col_btn2:
-                st.download_button(
-                    "Descargar Informe Ley 18",
-                    data=st.session_state["docx_ley18_bytes"],
-                    file_name="informe_ley_18.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    key="dl_ley18"
-                )
+        except Exception as e:
+            st.error(f"Error: {e}")
+            st.code(traceback.format_exc())
+
+    else:
+        st.warning("Debes subir los tres archivos base (Lista de Espera, RCE y Nómina Médica)")
+
+# =========================
+# DESCARGAS
+# =========================
+st.divider()
+st.subheader("📥 Descargar Informes")
+
+colA, colB, colC = st.columns(3)
+
+with colA:
+    if st.session_state["informe1"]:
+        st.download_button(
+            "📥 Informe 1",
+            data=st.session_state["informe1"],
+            file_name="Informe_Omisiones_1.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key="dl_1"
+        )
+
+with colB:
+    if st.session_state["informe2"]:
+        st.download_button(
+            "📥 Informe 2",
+            data=st.session_state["informe2"],
+            file_name="Informe_Omisiones_2.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key="dl_2"
+        )
+
+with colC:
+    if st.session_state.get("reporte_excel"):
+        st.download_button(
+            "📥 Descargar Excel consolidado",
+            data=st.session_state["reporte_excel"],
+            file_name="Reporte_Omisiones.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="dl_ex"
+        )
