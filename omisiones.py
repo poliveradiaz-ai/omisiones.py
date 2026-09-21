@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 import plotly.express as px
+from docx import Document
+from datetime import date
+
 
 st.set_page_config(
     page_title="Analizador de Horas Médicas",
@@ -60,6 +63,15 @@ if archivo:
         hoja1[col_h1_estado].astype(str).str.upper().eq("ASIGNADA")
     ].copy()
 
+
+
+    # Total de registros de la Hoja 1, independiente del estado
+    total_agendadas = len(hoja1)
+    
+    # Total de omisiones = registros con estado ASIGNADA
+    total_omisiones = len(df_asignadas)
+
+    
     # =========================
     # PADRONES
     # =========================
@@ -393,3 +405,57 @@ if archivo:
         file_name="resultado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+    st.markdown("## 📅 Datos del reporte")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        fecha_corte = st.date_input(
+            "Fecha de corte",
+            value=date.today(),
+            format="DD/MM/YYYY"
+        )
+    
+    with col2:
+        fecha_envio_preliminar = st.date_input(
+            "Fecha de envío preliminar",
+            value=date.today(),
+            format="DD/MM/YYYY"
+        )
+    
+    with col3:
+        meses = {
+            1: "ENERO",
+            2: "FEBRERO",
+            3: "MARZO",
+            4: "ABRIL",
+            5: "MAYO",
+            6: "JUNIO",
+            7: "JULIO",
+            8: "AGOSTO",
+            9: "SEPTIEMBRE",
+            10: "OCTUBRE",
+            11: "NOVIEMBRE",
+            12: "DICIEMBRE"
+        }
+    
+        mes_corte = f"{meses[fecha_corte.month]} {fecha_corte.year}"
+    
+        st.text_input(
+            "Mes de corte",
+            value=mes_corte,
+            disabled=True
+        )
+
+        variables = {
+            "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
+            "fecha_envio_preliminar": fecha_envio_preliminar.strftime("%d/%m/%Y"),
+            "mes_corte": mes_corte,
+        
+            "total_agendadas": total_agendadas,
+            "total_omisiones": total_omisiones,
+        
+            "total_medicos": total_medicos,
+            "total_no_medicos": total_no_medicos,
+        }
