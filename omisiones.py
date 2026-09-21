@@ -409,8 +409,8 @@ if archivo:
       # =========================================================
       # SECCIÓN SEPARADA: GENERACIÓN DE REPORTES EN WORD
       # =========================================================
-      st.markdown("---")
-      st.markdown("## 📄 Generación de Informes Word")
+    st.markdown("---")
+    st.markdown("## 📄 Generación de Informes Word")
     
       col_plantilla1, col_plantilla2 = st.columns(2)
     
