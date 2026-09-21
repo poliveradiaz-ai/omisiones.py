@@ -465,8 +465,8 @@ if archivo:
         'fecha_envio_preliminar': fecha_envio_preliminar,
         'total_agendadas': total_agendadas,
         'total_asignadas': total_asignadas,
-        'total_medicos': total_medicos,
-        'total_no_medicos': total_no_medicos,
+        'total_omisiones_medicos': total_medicos,
+        'total_omisiones_Ley18': total_no_medicos,
     
     }
 
