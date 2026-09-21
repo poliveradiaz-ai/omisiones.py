@@ -392,3 +392,4 @@ if archivo:
         data=salida.getvalue(),
         file_name="resultado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
