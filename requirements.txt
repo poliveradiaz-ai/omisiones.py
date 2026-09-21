@@ -3,6 +3,5 @@ pandas
 openpyxl
 xlsxwriter
 plotly
-streamlit
 python-docx
 docxtpl
