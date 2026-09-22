@@ -564,15 +564,6 @@ if archivo:
         hoja1
     )
 
-    # Total de horas ejecutadas
-    total_ejecutadas = (
-        hoja1[col_h1_estado]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-        .eq("EJECUTADA")
-        .sum()
-    )
 
     
     st.markdown("### 📊 Datos para documento")
