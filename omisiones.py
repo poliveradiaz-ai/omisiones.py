@@ -880,6 +880,25 @@ if archivo:
                 if total_agendadas > 0
                 else 0
             )
+            
+            porcentaje_ley18_agendadas = (
+                round(
+                    (total_no_medicos / total_agendadas) * 100,
+                    1
+                )
+                if total_agendadas > 0
+                else 0
+            )
+
+            porcentaje_leymedica_agendadas = (
+                round(
+                    (total_medicos / total_agendadas) * 100,
+                    1
+                )
+                if total_agendadas > 0
+                else 0
+            )
+
             # -------------------------------------------------
             # CONTEXTO
             # -------------------------------------------------
@@ -919,6 +938,8 @@ if archivo:
                     total_no_medicos,
                 
                 "porc_asignadas_agendadas": porcentaje_asignadas_agendadas,
+                "porc_ley18_agendadas":porcentaje_ley18_agendadas,
+                "porc_leymedica_agendadas":porcentaje_leymedica_agendadas,
 
                 "total_ejecutadas": total_ejecutadas,
 
