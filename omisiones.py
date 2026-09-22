@@ -557,31 +557,47 @@ if archivo:
 
 
     # =====================================================
-    # TOTAL AGENDADAS
+    # TOTAL AGENDADAS - EJECUTADAS
     # =====================================================
 
     total_agendadas = len(
         hoja1
     )
 
-    st.markdown(
-        "### 📊 Datos para documento"
+    # Total de horas ejecutadas
+    total_ejecutadas = (
+        hoja1[col_h1_estado]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .eq("EJECUTADA")
+        .sum()
     )
 
-    col1, col2 = st.columns(2)
+    
+    st.markdown("### 📊 Datos para documento")
 
+    col1, col2, col3 = st.columns(3)
+    
     with col1:
-
+    
         st.metric(
             "Total asignadas",
             total_asignadas
         )
-
+    
     with col2:
-
+    
         st.metric(
             "Total horas agendadas",
             total_agendadas
+        )
+    
+    with col3:
+    
+        st.metric(
+            "Total horas ejecutadas",
+            total_ejecutadas
         )
 
 
@@ -902,6 +918,9 @@ if archivo:
                     total_no_medicos,
                 
                 "porc_asignadas_agendadas": porcentaje_asignadas_agendadas,
+
+                "total_ejecutadas": total_ejecutadas,
+
             }
 
 
