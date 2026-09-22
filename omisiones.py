@@ -850,6 +850,19 @@ if archivo:
 
         else:
 
+
+            # =========================
+            # CALCULO PORCENTAJE
+            # =========================
+    
+            porcentaje_asignadas_agendadas = (
+                round(
+                    (total_asignadas / total_agendadas) * 100,
+                    1
+                )
+                if total_agendadas > 0
+                else 0
+            )
             # -------------------------------------------------
             # CONTEXTO
             # -------------------------------------------------
@@ -887,6 +900,8 @@ if archivo:
 
                 "total_omisiones_Ley18":
                     total_no_medicos,
+                
+                "porc_asignadas_agendadas": porcentaje_asignadas_agendadas,
             }
 
 
