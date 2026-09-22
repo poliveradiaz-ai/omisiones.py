@@ -459,6 +459,14 @@ if archivo:
         )
 
     # =========================
+    # BOTÓN
+    # =========================
+
+    generar_documentos = st.form_submit_button(
+        "📄 Generar documentos Word",
+        type="primary"
+    )
+    # =========================
     # CLAVES ARCHIVO WORD
     # =========================
     
