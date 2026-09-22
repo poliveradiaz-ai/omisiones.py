@@ -458,14 +458,14 @@ if archivo:
             key="plantilla_ley_18"
         )
 
-    # =========================
-    # BOTÓN
-    # =========================
-
-    generar_documentos = st.form_submit_button(
-        "📄 Generar documentos Word",
-        type="primary"
-    )
+        # =========================
+        # BOTÓN
+        # =========================
+    
+        generar_documentos = st.form_submit_button(
+            "📄 Generar documentos Word",
+            type="primary"
+        )
     # =========================
     # CLAVES ARCHIVO WORD
     # =========================
