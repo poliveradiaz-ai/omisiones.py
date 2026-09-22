@@ -938,7 +938,7 @@ if archivo:
                     total_no_medicos,
                 
                 "porc_asignadas_agendadas": porcentaje_asignadas_agendadas,
-                "porc_ley18_agendadas":porcentaje_ley18_agendadas,
+                "porc_ley18_agendadas":"prueba 2.5",
                 "porc_leymedica_agendadas":porcentaje_leymedica_agendadas,
 
                 "total_ejecutadas": total_ejecutadas,
