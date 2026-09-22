@@ -458,28 +458,8 @@ if archivo:
             key="plantilla_ley_18"
         )
 
-        # =========================
-        # BOTÓN
-        # =========================
+       
     
-        generar_documentos = st.form_submit_button(
-            "📄 Generar documentos Word",
-            type="primary"
-        )
-    # =========================
-    # CLAVES ARCHIVO WORD
-    # =========================
-    
-    contexto = {
-    
-        'fecha_corte': fecha_corte,
-        'fecha_envio_preliminar': fecha_envio_preliminar,
-        'total_agendadas': total_agendadas,
-        'total_asignadas': total_asignadas,
-        'total_omisiones_medicos': total_medicos,
-        'total_omisiones_Ley18': total_no_medicos,
-    
-    }
 
     # =========================
     # TABLA 1 RESUMEN MEDICOS
@@ -690,6 +670,35 @@ if archivo:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     
+    # =========================
+    # GENERAR DOCUMENTOS WORD
+    # =========================
+    
+    st.markdown("### 📄 Generación de documentos Word")
+    
+    generar_documentos = st.button(
+        "📄 Generar documentos Word",
+        type="primary",
+        key="generar_documentos_word"
+    )
+
+    # =========================
+    # FUNCIÓN GENERAR WORD
+    # =========================
+    
+    def generar_word(plantilla, contexto):
+    
+        documento = DocxTemplate(plantilla)
+    
+        documento.render(contexto)
+    
+        salida_word = BytesIO()
+    
+        documento.save(salida_word)
+    
+        salida_word.seek(0)
+    
+        return salida_word
 
     # =========================
     # GENERAR DOCUMENTOS WORD
@@ -710,66 +719,85 @@ if archivo:
         return salida
     
     
-    # =========================
-    # DESCARGAS WORD
-    # =========================
-    
-    st.markdown("### 📥 Documentos completados")
-    
-    col_word1, col_word2 = st.columns(2)
-    
-    # =========================
-    # LEY MÉDICA
+      # =========================
+    # GENERACIÓN Y DESCARGA WORD
     # =========================
     
-    with col_word1:
+    if generar_documentos:
     
-        if plantilla_ley_medica is not None:
+        # =========================
+        # VALIDAR PLANTILLAS
+        # =========================
     
-            documento_medico = generar_word(
-                plantilla_ley_medica,
-                contexto
-            )
+        if (
+            plantilla_ley_medica is None
+            and plantilla_ley_18 is None
+        ):
     
-            st.download_button(
-                label="📥 Descargar Word Ley Médica",
-                data=documento_medico.getvalue(),
-                file_name="Informe_Ley_Medica.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="descargar_ley_medica"
+            st.warning(
+                "Debes subir al menos una plantilla Word."
             )
     
         else:
     
-            st.info(
-                "Primero sube la plantilla Word de Ley Médica."
-            )
+            # =========================
+            # CONTEXTO
+            # =========================
     
+            contexto = {
+                "fecha_corte": fecha_corte,
+                "fecha_envio_preliminar": fecha_envio_preliminar,
+                "total_agendadas": total_agendadas,
+                "total_asignadas": total_asignadas,
+                "total_omisiones_medicos": total_medicos,
+                "total_omisiones_Ley18": total_no_medicos,
+            }
     
-    # =========================
-    # LEY 18
-    # =========================
+            st.markdown("### 📥 Documentos completados")
     
-    with col_word2:
+            col_word1, col_word2 = st.columns(2)
     
-        if plantilla_ley_18 is not None:
+            # =========================
+            # LEY MÉDICA
+            # =========================
     
-            documento_ley18 = generar_word(
-                plantilla_ley_18,
-                contexto
-            )
+            with col_word1:
     
-            st.download_button(
-                label="📥 Descargar Word Ley 18",
-                data=documento_ley18.getvalue(),
-                file_name="Informe_Ley_18.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="descargar_ley_18"
-            )
+                if plantilla_ley_medica is not None:
     
-        else:
+                    documento_medico = generar_word(
+                        plantilla_ley_medica,
+                        contexto
+                    )
     
-            st.info(
-                "Primero sube la plantilla Word de Ley 18."
-            )
+                    st.download_button(
+                        label="📥 Descargar Word Ley Médica",
+                        data=documento_medico.getvalue(),
+                        file_name="Informe_Ley_Medica.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="descargar_ley_medica"
+                    )
+    
+            # =========================
+            # LEY 18
+            # =========================
+    
+            with col_word2:
+    
+                if plantilla_ley_18 is not None:
+    
+                    documento_ley18 = generar_word(
+                        plantilla_ley_18,
+                        contexto
+                    )
+    
+                    st.download_button(
+                        label="📥 Descargar Word Ley 18",
+                        data=documento_ley18.getvalue(),
+                        file_name="Informe_Ley_18.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="descargar_ley_18"
+                    )
+
+
     
