@@ -856,10 +856,10 @@ if archivo:
 
             contexto = {
 
-                "fecha_corte": fecha_corte,
+                "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
 
                 "fecha_envio_preliminar":
-                    fecha_envio_preliminar,
+                    fecha_envio_preliminar.strftime("%d/%m/%Y"),
 
                 "total_agendadas":
                     total_agendadas,
