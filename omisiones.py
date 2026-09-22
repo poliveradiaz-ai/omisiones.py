@@ -860,6 +860,21 @@ if archivo:
 
                 "fecha_envio_preliminar":
                     fecha_envio_preliminar.strftime("%d/%m/%Y"),
+                
+                "mes_corte": [
+                    "enero",
+                    "febrero",
+                    "marzo",
+                    "abril",
+                    "mayo",
+                    "junio",
+                    "julio",
+                    "agosto",
+                    "septiembre",
+                    "octubre",
+                    "noviembre",
+                    "diciembre"
+                ][fecha_corte.month - 1],
 
                 "total_agendadas":
                     total_agendadas,
