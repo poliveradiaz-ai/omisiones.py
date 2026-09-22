@@ -563,6 +563,16 @@ if archivo:
     total_agendadas = len(
         hoja1
     )
+        # Total de horas ejecutadas
+    total_ejecutadas = (
+        hoja1["ESTADO HORA"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .eq("EJECUTADA")
+        .sum()
+    )
+
 
 
     
