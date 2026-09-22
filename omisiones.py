@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-import plotly.express as px
-from docx import Document
 from docxtpl import DocxTemplate
 
+
+# =========================================================
+# CONFIGURACIÓN
+# =========================================================
 
 st.set_page_config(
     page_title="Analizador de Horas Médicas",
@@ -13,28 +15,68 @@ st.set_page_config(
 
 st.title("Analizador de Horas Asignadas")
 
-archivo = st.file_uploader(
-    "Sube archivo Excel",
-    type=["xlsx"]
-)
 
-if archivo:
+# =========================================================
+# FUNCIONES
+# =========================================================
 
-    # =========================
+def generar_word(plantilla, contexto):
+
+    documento = DocxTemplate(plantilla)
+
+    documento.render(contexto)
+
+    salida = BytesIO()
+
+    documento.save(salida)
+
+    salida.seek(0)
+
+    return salida
+
+
+def procesar_excel(archivo):
+
+    # =====================================================
     # HOJAS
-    # =========================
+    # =====================================================
 
-    hoja1 = pd.read_excel(archivo, sheet_name=0)
-    hoja2 = pd.read_excel(archivo, sheet_name=1)
-    hoja3 = pd.read_excel(archivo, sheet_name=2)
+    hoja1 = pd.read_excel(
+        archivo,
+        sheet_name=0
+    )
 
-    hoja1.columns = hoja1.columns.str.strip().str.upper()
-    hoja2.columns = hoja2.columns.str.strip().str.upper()
-    hoja3.columns = hoja3.columns.str.strip().str.upper()
+    hoja2 = pd.read_excel(
+        archivo,
+        sheet_name=1
+    )
 
-    # =========================
+    hoja3 = pd.read_excel(
+        archivo,
+        sheet_name=2
+    )
+
+    hoja1.columns = (
+        hoja1.columns
+        .str.strip()
+        .str.upper()
+    )
+
+    hoja2.columns = (
+        hoja2.columns
+        .str.strip()
+        .str.upper()
+    )
+
+    hoja3.columns = (
+        hoja3.columns
+        .str.strip()
+        .str.upper()
+    )
+
+    # =====================================================
     # COLUMNAS
-    # =========================
+    # =====================================================
 
     col_h1_prof = "NOMBRE PROFESIONAL"
     col_h1_agr = "AGRUPACION"
@@ -45,26 +87,34 @@ if archivo:
 
     col_h3_prof = "PROFESIONAL LEY 18"
 
-    # =========================
-    # VALIDACION
-    # =========================
+    # =====================================================
+    # VALIDACIÓN
+    # =====================================================
 
-    for col in [col_h1_prof, col_h1_agr, col_h1_estado]:
+    for col in [
+        col_h1_prof,
+        col_h1_agr,
+        col_h1_estado
+    ]:
+
         if col not in hoja1.columns:
-            st.error(f"Falta columna en Hoja 1: {col}")
-            st.stop()
 
-    if col_h2_prof not in hoja2.columns or col_h2_esp not in hoja2.columns:
-        st.error("Hoja 2 inválida")
-        st.stop()
+            return None, f"Falta columna en Hoja 1: {col}"
+
+    if (
+        col_h2_prof not in hoja2.columns
+        or col_h2_esp not in hoja2.columns
+    ):
+
+        return None, "Hoja 2 inválida"
 
     if col_h3_prof not in hoja3.columns:
-        st.error("Hoja 3 inválida")
-        st.stop()
 
-    # =========================
+        return None, "Hoja 3 inválida"
+
+    # =====================================================
     # BASE
-    # =========================
+    # =====================================================
 
     df_asignadas = hoja1[
         hoja1[col_h1_estado]
@@ -73,9 +123,9 @@ if archivo:
         .eq("ASIGNADA")
     ].copy()
 
-    # =========================
+    # =====================================================
     # PADRONES
-    # =========================
+    # =====================================================
 
     medicos_hoja2 = set(
         hoja2[col_h2_prof]
@@ -104,9 +154,9 @@ if archivo:
         )
     )
 
-    # =========================
+    # =====================================================
     # AGRUPACIONES
-    # =========================
+    # =====================================================
 
     agrup_medicos = {
         "MEDICO APS",
@@ -128,9 +178,9 @@ if archivo:
         "KINESIOLOGO"
     }
 
-    # =========================
-    # CLASIFICACION
-    # =========================
+    # =====================================================
+    # CLASIFICACIÓN INICIAL
+    # =====================================================
 
     tipos = []
     especialidad_final = []
@@ -138,21 +188,18 @@ if archivo:
 
     for _, fila in df_asignadas.iterrows():
 
-        prof = str(fila[col_h1_prof]).strip().upper()
-        agr = str(fila[col_h1_agr]).strip().upper()
+        prof = str(
+            fila[col_h1_prof]
+        ).strip().upper()
 
-        # ==========================================
-        # PRIORIDAD 1: NO MEDICOS DE HOJA 3
-        # ==========================================
+        agr = str(
+            fila[col_h1_agr]
+        ).strip().upper()
 
         if prof in no_medicos_hoja3:
 
             tipos.append("NO_MEDICO")
             especialidad_final.append(None)
-
-        # ==========================================
-        # PRIORIDAD 2: AGRUPACIONES MEDICAS
-        # ==========================================
 
         elif agr in agrup_medicos:
 
@@ -165,18 +212,10 @@ if archivo:
                 )
             )
 
-        # ==========================================
-        # PRIORIDAD 3: AGRUPACIONES NO MEDICAS
-        # ==========================================
-
         elif agr in agrup_no_medicos:
 
             tipos.append("NO_MEDICO")
             especialidad_final.append(None)
-
-        # ==========================================
-        # PROCEDIMIENTO
-        # ==========================================
 
         elif agr == "PROCEDIMIENTO":
 
@@ -211,18 +250,121 @@ if archivo:
             desconocidos_proc.append(prof)
 
     df_asignadas["TIPO_PROFESIONAL"] = tipos
-    df_asignadas["ESPECIALIDAD_FINAL"] = especialidad_final
 
-    # =========================
-    # PREGUNTA PROCEDIMIENTO
-    # =========================
+    df_asignadas["ESPECIALIDAD_FINAL"] = (
+        especialidad_final
+    )
+
+    return {
+        "hoja1": hoja1,
+        "hoja2": hoja2,
+        "hoja3": hoja3,
+        "df_asignadas": df_asignadas,
+        "medicos_hoja2": medicos_hoja2,
+        "no_medicos_hoja3": no_medicos_hoja3,
+        "especialidades": especialidades,
+        "agrup_medicos": agrup_medicos,
+        "agrup_no_medicos": agrup_no_medicos,
+        "desconocidos_proc": sorted(
+            set(desconocidos_proc)
+        ),
+        "col_h1_prof": col_h1_prof,
+        "col_h1_agr": col_h1_agr,
+    }, None
+
+
+# =========================================================
+# SUBIR EXCEL
+# =========================================================
+
+archivo = st.file_uploader(
+    "Sube archivo Excel",
+    type=["xlsx"]
+)
+
+
+# =========================================================
+# PROCESAR EXCEL SOLO CUANDO CAMBIA EL ARCHIVO
+# =========================================================
+
+if archivo:
+
+    # Identificador del archivo actual
+    archivo_id = (
+        archivo.name,
+        archivo.size
+    )
+
+    # Si es un archivo nuevo, procesarlo
+    if (
+        "archivo_id" not in st.session_state
+        or st.session_state["archivo_id"] != archivo_id
+    ):
+
+        with st.spinner(
+            "Procesando archivo Excel..."
+        ):
+
+            resultado, error = procesar_excel(
+                archivo
+            )
+
+        if error:
+
+            st.error(error)
+
+            st.stop()
+
+        # Guardar resultado
+        st.session_state["archivo_id"] = archivo_id
+
+        st.session_state["resultado"] = resultado
+
+        # Limpiar documentos Word anteriores
+        st.session_state.pop(
+            "documento_medico",
+            None
+        )
+
+        st.session_state.pop(
+            "documento_ley18",
+            None
+        )
+
+
+    # =====================================================
+    # RECUPERAR RESULTADO PROCESADO
+    # =====================================================
+
+    resultado = st.session_state["resultado"]
+
+    hoja1 = resultado["hoja1"]
+    df_asignadas = resultado["df_asignadas"]
+
+    medicos_hoja2 = resultado["medicos_hoja2"]
+    no_medicos_hoja3 = resultado["no_medicos_hoja3"]
+
+    especialidades = resultado["especialidades"]
+
+    agrup_medicos = resultado["agrup_medicos"]
+    agrup_no_medicos = resultado["agrup_no_medicos"]
+
+    desconocidos_proc = resultado["desconocidos_proc"]
+
+    col_h1_prof = resultado["col_h1_prof"]
+    col_h1_agr = resultado["col_h1_agr"]
+
+
+    # =====================================================
+    # REVISIÓN PROCEDIMIENTO
+    # =====================================================
 
     st.subheader("🔎 Revisión PROCEDIMIENTO")
 
     nuevos_medicos = []
     nuevos_no_medicos = []
 
-    for prof in sorted(set(desconocidos_proc)):
+    for prof in desconocidos_proc:
 
         st.warning(
             f"{prof} no está en Hoja 2 ni Hoja 3"
@@ -231,7 +373,7 @@ if archivo:
         tipo = st.radio(
             f"{prof} es:",
             ["No Médico", "Médico"],
-            key=prof
+            key=f"tipo_{prof}"
         )
 
         if tipo == "Médico":
@@ -258,77 +400,79 @@ if archivo:
 
             no_medicos_hoja3.add(prof)
 
-    # =========================
-    # RECLASIFICACION FINAL
-    # =========================
+
+    # =====================================================
+    # RECLASIFICACIÓN FINAL
+    # =====================================================
 
     def clasificar(prof, agr):
 
-        prof = str(prof).strip().upper()
-        agr = str(agr).strip().upper()
+        prof = str(
+            prof
+        ).strip().upper()
 
-        # ==========================================
-        # PRIORIDAD 1: LISTA DE NO MEDICOS - HOJA 3
-        # ==========================================
+        agr = str(
+            agr
+        ).strip().upper()
 
         if prof in no_medicos_hoja3:
-            return "NO_MEDICO"
 
-        # ==========================================
-        # PRIORIDAD 2: AGRUPACIONES MEDICAS
-        # ==========================================
+            return "NO_MEDICO"
 
         if agr in agrup_medicos:
+
             return "MEDICO"
 
-        # ==========================================
-        # PRIORIDAD 3: AGRUPACIONES NO MEDICAS
-        # ==========================================
-
         if agr in agrup_no_medicos:
-            return "NO_MEDICO"
 
-        # ==========================================
-        # PRIORIDAD 4: PROCEDIMIENTO
-        # ==========================================
+            return "NO_MEDICO"
 
         if agr == "PROCEDIMIENTO":
 
             if prof in medicos_hoja2:
+
                 return "MEDICO"
 
             if prof in no_medicos_hoja3:
+
                 return "NO_MEDICO"
 
             return "PROC_DUDOSO"
 
         return "PROC_DUDOSO"
 
-    df_asignadas["TIPO_PROFESIONAL"] = df_asignadas.apply(
-        lambda r: clasificar(
-            r[col_h1_prof],
-            r[col_h1_agr]
-        ),
-        axis=1
+
+    df_asignadas["TIPO_PROFESIONAL"] = (
+        df_asignadas.apply(
+            lambda r: clasificar(
+                r[col_h1_prof],
+                r[col_h1_agr]
+            ),
+            axis=1
+        )
     )
 
-    df_asignadas["ESPECIALIDAD_FINAL"] = df_asignadas.apply(
-        lambda r: (
-            especialidades.get(
-                str(r[col_h1_prof])
-                .strip()
-                .upper(),
-                "SIN ESPECIALIDAD"
-            )
-            if r["TIPO_PROFESIONAL"] == "MEDICO"
-            else None
-        ),
-        axis=1
+
+    df_asignadas["ESPECIALIDAD_FINAL"] = (
+        df_asignadas.apply(
+            lambda r: (
+                especialidades.get(
+                    str(
+                        r[col_h1_prof]
+                    ).strip().upper(),
+                    "SIN ESPECIALIDAD"
+                )
+                if r["TIPO_PROFESIONAL"] == "MEDICO"
+                else None
+            ),
+            axis=1
+        )
     )
 
-    # =========================
+
+    # =====================================================
     # BASES
-    # =========================
+    # =====================================================
 
     df_medicos = df_asignadas[
         df_asignadas["TIPO_PROFESIONAL"] == "MEDICO"
@@ -343,22 +487,29 @@ if archivo:
     ].copy()
 
     df_medicos["OMISIONES"] = 1
+
     df_no_medicos["OMISIONES"] = 1
 
-    # =========================
+
+    # =====================================================
     # RESUMEN GENERAL
-    # =========================
+    # =====================================================
 
-    st.markdown("## 📊 Resumen General de Omisiones")
+    st.markdown(
+        "## 📊 Resumen General de Omisiones"
+    )
 
-    # Total de filas que tienen estado ASIGNADA
-    total_asignadas = len(df_asignadas)
+    total_asignadas = len(
+        df_asignadas
+    )
 
-    # Total de médicos
-    total_medicos = len(df_medicos)
+    total_medicos = len(
+        df_medicos
+    )
 
-    # Total de no médicos
-    total_no_medicos = len(df_no_medicos)
+    total_no_medicos = len(
+        df_no_medicos
+    )
 
     col1, col2, col3 = st.columns(3)
 
@@ -377,11 +528,14 @@ if archivo:
         total_no_medicos
     )
 
-    # =========================
-    # GENERACION DE DOCUMENTOS
-    # =========================
 
-    st.markdown("## 📄 Generación de documentos")
+    # =====================================================
+    # FECHAS
+    # =====================================================
+
+    st.markdown(
+        "## 📄 Generación de documentos"
+    )
 
     col_fecha1, col_fecha2 = st.columns(2)
 
@@ -389,30 +543,30 @@ if archivo:
 
         fecha_corte = st.date_input(
             "Fecha de corte",
-            format="DD/MM/YYYY"
+            format="DD/MM/YYYY",
+            key="fecha_corte"
         )
 
     with col_fecha2:
 
         fecha_envio_preliminar = st.date_input(
             "Fecha de envío preliminar",
-            format="DD/MM/YYYY"
+            format="DD/MM/YYYY",
+            key="fecha_envio_preliminar"
         )
 
-    # =========================
-    # CALCULOS PARA DOCUMENTOS
-    # =========================
 
+    # =====================================================
+    # TOTAL AGENDADAS
+    # =====================================================
 
-    # Total de horas agendadas
-    # Corresponde al total de filas de la Hoja 1
-    total_agendadas = len(hoja1)
+    total_agendadas = len(
+        hoja1
+    )
 
-    # =========================
-    # MOSTRAR CALCULOS
-    # =========================
-
-    st.markdown("### 📊 Datos para documento")
+    st.markdown(
+        "### 📊 Datos para documento"
+    )
 
     col1, col2 = st.columns(2)
 
@@ -430,40 +584,45 @@ if archivo:
             total_agendadas
         )
 
-    # =========================
+
+    # =====================================================
     # PLANTILLAS WORD
-    # =========================
-    
-    st.markdown("### 📄 Plantillas Word")
-    
+    # =====================================================
+
+    st.markdown(
+        "### 📄 Plantillas Word"
+    )
+
     col_word1, col_word2 = st.columns(2)
-    
+
     with col_word1:
-    
-        st.markdown("#### 🩺 Plantilla Ley Médica")
-    
+
+        st.markdown(
+            "#### 🩺 Plantilla Ley Médica"
+        )
+
         plantilla_ley_medica = st.file_uploader(
             "Sube la plantilla Word de Ley Médica",
             type=["docx"],
             key="plantilla_ley_medica"
         )
-    
+
     with col_word2:
-    
-        st.markdown("#### 📋 Plantilla Ley 18")
-    
+
+        st.markdown(
+            "#### 📋 Plantilla Ley 18"
+        )
+
         plantilla_ley_18 = st.file_uploader(
             "Sube la plantilla Word de Ley 18",
             type=["docx"],
             key="plantilla_ley_18"
         )
 
-       
-    
 
-    # =========================
-    # TABLA 1 RESUMEN MEDICOS
-    # =========================
+    # =====================================================
+    # TABLAS PARA EXCEL
+    # =====================================================
 
     tabla_resumen_medicos = (
         df_medicos
@@ -474,9 +633,6 @@ if archivo:
         )
     )
 
-    # =========================
-    # TABLA 2 DETALLE MEDICOS
-    # =========================
 
     tabla_medicos_detalle = (
         df_medicos
@@ -501,9 +657,6 @@ if archivo:
         )
     )
 
-    # =========================
-    # TABLA 3 PACIENTES MEDICOS
-    # =========================
 
     tabla_medicos_pacientes = (
         df_medicos
@@ -533,9 +686,6 @@ if archivo:
         )
     )
 
-    # =========================
-    # TABLA 4 RESUMEN NO MEDICOS
-    # =========================
 
     tabla_resumen_no_medicos = (
         df_no_medicos
@@ -546,9 +696,6 @@ if archivo:
         )
     )
 
-    # =========================
-    # TABLA 5 DETALLE NO MEDICOS
-    # =========================
 
     tabla_no_medicos_detalle = (
         df_no_medicos
@@ -572,9 +719,6 @@ if archivo:
         )
     )
 
-    # =========================
-    # TABLA 6 PACIENTES NO MEDICOS
-    # =========================
 
     tabla_no_medicos_pacientes = (
         df_no_medicos
@@ -602,9 +746,10 @@ if archivo:
         )
     )
 
-    # =========================
-    # EXPORT EXCEL
-    # =========================
+
+    # =====================================================
+    # EXPORTAR EXCEL
+    # =====================================================
 
     salida = BytesIO()
 
@@ -659,145 +804,180 @@ if archivo:
                 index=False
             )
 
-    # =========================
+
+    # =====================================================
     # DESCARGAR EXCEL
-    # =========================
+    # =====================================================
 
     st.download_button(
-        "Descargar Excel",
+        "📥 Descargar Excel",
         data=salida.getvalue(),
         file_name="resultado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="descargar_excel"
     )
-    
-    # =========================
-    # GENERAR DOCUMENTOS WORD
-    # =========================
-    
-    st.markdown("### 📄 Generación de documentos Word")
-    
+
+
+    # =====================================================
+    # GENERAR WORD
+    # =====================================================
+
+    st.markdown(
+        "### 📄 Generación de documentos Word"
+    )
+
     generar_documentos = st.button(
         "📄 Generar documentos Word",
         type="primary",
         key="generar_documentos_word"
     )
 
-    # =========================
-    # FUNCIÓN GENERAR WORD
-    # =========================
-    
-    def generar_word(plantilla, contexto):
-    
-        documento = DocxTemplate(plantilla)
-    
-        documento.render(contexto)
-    
-        salida_word = BytesIO()
-    
-        documento.save(salida_word)
-    
-        salida_word.seek(0)
-    
-        return salida_word
 
-    # =========================
-    # GENERAR DOCUMENTOS WORD
-    # =========================
-    
-    def generar_word(plantilla, contexto):
-    
-        documento = DocxTemplate(plantilla)
-    
-        documento.render(contexto)
-    
-        salida = BytesIO()
-    
-        documento.save(salida)
-    
-        salida.seek(0)
-    
-        return salida
-    
-    
-      # =========================
-    # GENERACIÓN Y DESCARGA WORD
-    # =========================
-    
     if generar_documentos:
-    
-        # =========================
+
+        # -------------------------------------------------
         # VALIDAR PLANTILLAS
-        # =========================
-    
+        # -------------------------------------------------
+
         if (
             plantilla_ley_medica is None
             and plantilla_ley_18 is None
         ):
-    
+
             st.warning(
                 "Debes subir al menos una plantilla Word."
             )
-    
+
         else:
-    
-            # =========================
+
+            # -------------------------------------------------
             # CONTEXTO
-            # =========================
-    
+            # -------------------------------------------------
+
             contexto = {
+
                 "fecha_corte": fecha_corte,
-                "fecha_envio_preliminar": fecha_envio_preliminar,
-                "total_agendadas": total_agendadas,
-                "total_asignadas": total_asignadas,
-                "total_omisiones_medicos": total_medicos,
-                "total_omisiones_Ley18": total_no_medicos,
+
+                "fecha_envio_preliminar":
+                    fecha_envio_preliminar,
+
+                "total_agendadas":
+                    total_agendadas,
+
+                "total_asignadas":
+                    total_asignadas,
+
+                "total_omisiones_medicos":
+                    total_medicos,
+
+                "total_omisiones_Ley18":
+                    total_no_medicos,
             }
-    
-            st.markdown("### 📥 Documentos completados")
-    
-            col_word1, col_word2 = st.columns(2)
-    
-            # =========================
+
+
+            # -------------------------------------------------
             # LEY MÉDICA
-            # =========================
-    
-            with col_word1:
-    
-                if plantilla_ley_medica is not None:
-    
+            # -------------------------------------------------
+
+            if plantilla_ley_medica is not None:
+
+                with st.spinner(
+                    "Generando Word Ley Médica..."
+                ):
+
                     documento_medico = generar_word(
                         plantilla_ley_medica,
                         contexto
                     )
-    
-                    st.download_button(
-                        label="📥 Descargar Word Ley Médica",
-                        data=documento_medico.getvalue(),
-                        file_name="Informe_Ley_Medica.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        key="descargar_ley_medica"
-                    )
-    
-            # =========================
+
+                st.session_state[
+                    "documento_medico"
+                ] = documento_medico.getvalue()
+
+
+            # -------------------------------------------------
             # LEY 18
-            # =========================
-    
-            with col_word2:
-    
-                if plantilla_ley_18 is not None:
-    
+            # -------------------------------------------------
+
+            if plantilla_ley_18 is not None:
+
+                with st.spinner(
+                    "Generando Word Ley 18..."
+                ):
+
                     documento_ley18 = generar_word(
                         plantilla_ley_18,
                         contexto
                     )
-    
-                    st.download_button(
-                        label="📥 Descargar Word Ley 18",
-                        data=documento_ley18.getvalue(),
-                        file_name="Informe_Ley_18.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        key="descargar_ley_18"
-                    )
+
+                st.session_state[
+                    "documento_ley18"
+                ] = documento_ley18.getvalue()
 
 
-    
+            st.success(
+                "Documentos Word generados correctamente."
+            )
+
+
+    # =====================================================
+    # DESCARGAS WORD
+    # =====================================================
+
+    if (
+        "documento_medico"
+        in st.session_state
+        or
+        "documento_ley18"
+        in st.session_state
+    ):
+
+        st.markdown(
+            "### 📥 Documentos completados"
+        )
+
+        col_word1, col_word2 = st.columns(2)
+
+
+        # -------------------------------------------------
+        # LEY MÉDICA
+        # -------------------------------------------------
+
+        with col_word1:
+
+            if (
+                "documento_medico"
+                in st.session_state
+            ):
+
+                st.download_button(
+                    label="📥 Descargar Word Ley Médica",
+                    data=st.session_state[
+                        "documento_medico"
+                    ],
+                    file_name="Informe_Ley_Medica.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="descargar_ley_medica"
+                )
+
+
+        # -------------------------------------------------
+        # LEY 18
+        # -------------------------------------------------
+
+        with col_word2:
+
+            if (
+                "documento_ley18"
+                in st.session_state
+            ):
+
+                st.download_button(
+                    label="📥 Descargar Word Ley 18",
+                    data=st.session_state[
+                        "documento_ley18"
+                    ],
+                    file_name="Informe_Ley_18.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="descargar_ley_18"
+                )
