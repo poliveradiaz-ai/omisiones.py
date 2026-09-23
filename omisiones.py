@@ -1139,7 +1139,6 @@ if archivo:
 
                 "total_omisiones_policlinico":
                     int(total_omisiones_policlinico),
-                "total_omisiones_policlinico": total_omisiones_policlinico,
                 "funcionarios_policlinico": filas_funcionario_policlinico,
                 "omisiones_especialidad": filas_omisiones_especialidad,
 
