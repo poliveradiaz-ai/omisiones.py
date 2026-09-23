@@ -543,6 +543,80 @@ if archivo:
     .to_dict(orient="records")
 )
 
+
+    # =====================================================
+    # RESUMEN DE OMISIONES POR FUNCIONARIO Y POLICLÍNICO
+    # =====================================================
+    
+    tabla_funcionario_policlinico = (
+        df_no_medicos
+        .groupby(
+            [
+                col_h1_prof,
+                "POLICLINICO"
+            ],
+            dropna=False
+        )
+        .size()
+        .reset_index(
+            name="OMISIONES"
+        )
+    )
+    
+    # Renombrar columnas
+    tabla_funcionario_policlinico = (
+        tabla_funcionario_policlinico.rename(
+            columns={
+                col_h1_prof: "FUNCIONARIO"
+            }
+        )
+    )
+    
+    # Limpiar nombres
+    tabla_funcionario_policlinico["FUNCIONARIO"] = (
+        tabla_funcionario_policlinico["FUNCIONARIO"]
+        .fillna("SIN FUNCIONARIO")
+        .astype(str)
+        .str.strip()
+    )
+    
+    tabla_funcionario_policlinico["POLICLINICO"] = (
+        tabla_funcionario_policlinico["POLICLINICO"]
+        .fillna("SIN POLICLÍNICO")
+        .astype(str)
+        .str.strip()
+    )
+    
+    # Ordenar
+    tabla_funcionario_policlinico = (
+        tabla_funcionario_policlinico
+        .sort_values(
+            [
+                "POLICLINICO",
+                "OMISIONES"
+            ],
+            ascending=[
+                True,
+                False
+            ]
+        )
+        .reset_index(drop=True)
+    )
+    
+    # Convertir para Word
+    filas_funcionario_policlinico = (
+        tabla_funcionario_policlinico[
+            [
+                "FUNCIONARIO",
+                "POLICLINICO",
+                "OMISIONES"
+            ]
+        ]
+        .to_dict(
+            orient="records"
+        )
+    )
+
     
     # =====================================================
     # RESUMEN GENERAL
@@ -1000,8 +1074,8 @@ if archivo:
                 "total_omisiones_policlinico":
                     int(total_omisiones_policlinico),
                 "total_omisiones_policlinico": total_omisiones_policlinico,
+                "funcionarios_policlinico": filas_funcionario_policlinico,
 
-                
 
             }
 
