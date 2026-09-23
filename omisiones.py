@@ -775,13 +775,13 @@ if archivo:
     # =====================================================
     
     orden_especialidades = (
-        tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"]
+        tabla_omisiones_especialidad["ESPECIALIDAD"]
         .tolist()
     )
     
-    tabla_omisiones_profesional["ESPECIALIDAD_FINAL"] = (
+    tabla_omisiones_profesional["ESPECIALIDAD"] = (
         pd.Categorical(
-            tabla_omisiones_profesional["ESPECIALIDAD_FINAL"],
+            tabla_omisiones_profesional["ESPECIALIDAD"],
             categories=orden_especialidades,
             ordered=True
         )
