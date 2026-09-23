@@ -1107,12 +1107,13 @@ if archivo:
             # -------------------------------------------------
 
             contexto = {
-
-                "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
-
+            
+                "fecha_corte":
+                    fecha_corte.strftime("%d/%m/%Y"),
+            
                 "fecha_envio_preliminar":
                     fecha_envio_preliminar.strftime("%d/%m/%Y"),
-                
+            
                 "mes_corte": [
                     "enero",
                     "febrero",
@@ -1127,34 +1128,58 @@ if archivo:
                     "noviembre",
                     "diciembre"
                 ][fecha_corte.month - 1],
-
+            
                 "total_agendadas":
                     total_agendadas,
-
+            
                 "total_asignadas":
                     total_asignadas,
-
+            
                 "total_omisiones_medicos":
                     total_medicos,
-
+            
                 "total_omisiones_Ley18":
                     total_no_medicos,
-                
-                "porc_asignadas_agendadas": porcentaje_asignadas_agendadas,
-                "porc_ley18_agendadas": porcentaje_ley18_agendadas,
-                "porc_leymedica_agendadas":porcentaje_leymedica_agendadas,
-
-                "total_ejecutadas": total_ejecutadas,
-                "omisiones_policlinico": filas_omisiones_policlinico,
-
+            
+                "porc_asignadas_agendadas":
+                    porcentaje_asignadas_agendadas,
+            
+                "porc_ley18_agendadas":
+                    porcentaje_ley18_agendadas,
+            
+                "porc_leymedica_agendadas":
+                    porcentaje_leymedica_agendadas,
+            
+                "total_ejecutadas":
+                    total_ejecutadas,
+            
+                # -----------------------------------------
+                # POLICLÍNICOS
+                # -----------------------------------------
+            
+                "omisiones_policlinico":
+                    filas_omisiones_policlinico,
+            
                 "total_omisiones_policlinico":
-                    int(total_omisiones_policlinico),
-                "funcionarios_policlinico": filas_funcionario_policlinico,
-                "omisiones_especialidad": filas_omisiones_especialidad,
-
-                "total_omisiones_especialidad": int(total_omisiones_especialidad),
-
-            }
+                    total_omisiones_policlinico,
+            
+                # -----------------------------------------
+                # FUNCIONARIOS
+                # -----------------------------------------
+            
+                "funcionarios_policlinico":
+                    filas_funcionario_policlinico,
+            
+                # -----------------------------------------
+                # ESPECIALIDADES
+                # -----------------------------------------
+            
+                "omisiones_especialidad":
+                    filas_omisiones_especialidad,
+            
+                "total_omisiones_especialidad":
+                    total_omisiones_especialidad,
+}
 
 
             # -------------------------------------------------
