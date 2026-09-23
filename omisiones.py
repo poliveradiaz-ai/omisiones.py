@@ -999,6 +999,8 @@ if archivo:
 
                 "total_omisiones_policlinico":
                     int(total_omisiones_policlinico),
+                "total_omisiones_policlinico": total_omisiones_policlinico,
+
                 
 
             }
