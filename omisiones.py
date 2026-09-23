@@ -507,7 +507,7 @@ if archivo:
         )
     )
     
-    # Limpiar valores vacíos
+    # Reemplazar valores vacíos
     tabla_omisiones_policlinico["POLICLINICO"] = (
         tabla_omisiones_policlinico["POLICLINICO"]
         .fillna("SIN POLICLÍNICO")
@@ -525,15 +525,36 @@ if archivo:
         .reset_index(drop=True)
     )
     
-    # Convertir a lista para Word
+    # =====================================================
+    # NUMERACIÓN
+    # =====================================================
+    
+    tabla_omisiones_policlinico["N"] = range(
+        1,
+        len(tabla_omisiones_policlinico) + 1
+    )
+    
+    # =====================================================
+    # CONVERTIR PARA WORD
+    # =====================================================
+    
     filas_omisiones_policlinico = (
-        tabla_omisiones_policlinico
+        tabla_omisiones_policlinico[
+            [
+                "N",
+                "POLICLINICO",
+                "OMISIONES"
+            ]
+        ]
         .to_dict(
             orient="records"
         )
     )
     
-    # Total
+    # =====================================================
+    # TOTAL
+    # =====================================================
+    
     total_omisiones_policlinico = int(
         tabla_omisiones_policlinico["OMISIONES"].sum()
     )
