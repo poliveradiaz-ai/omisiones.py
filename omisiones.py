@@ -724,7 +724,6 @@ if archivo:
         )
     )
 
-
     # =====================================================
     # RESUMEN DE OMISIONES POR PROFESIONAL Y ESPECIALIDAD
     # =====================================================
@@ -760,12 +759,23 @@ if archivo:
         .str.strip()
     )
     
-    # Ordenar por especialidad y luego por omisiones
+    # Cambiar nombres para Word
+    tabla_omisiones_profesional = (
+        tabla_omisiones_profesional
+        .rename(
+            columns={
+                col_h1_prof: "NOMBRE",
+                "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
+            }
+        )
+    )
+    
+    # Ordenar
     tabla_omisiones_profesional = (
         tabla_omisiones_profesional
         .sort_values(
             [
-                "ESPECIALIDAD_FINAL",
+                "ESPECIALIDAD",
                 "OMISIONES"
             ],
             ascending=[
@@ -780,17 +790,22 @@ if archivo:
     filas_omisiones_profesional = (
         tabla_omisiones_profesional[
             [
-                col_h1_prof,
-                "ESPECIALIDAD_FINAL",
+                "NOMBRE",
+                "ESPECIALIDAD",
                 "OMISIONES"
             ]
         ]
         .to_dict(
             orient="records"
         )
-    )
+)
 
 
+
+
+
+
+    
     # =====================================================
     # RESUMEN GENERAL
     # =====================================================
