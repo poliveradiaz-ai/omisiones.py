@@ -724,6 +724,72 @@ if archivo:
         )
     )
 
+
+    # =====================================================
+    # RESUMEN DE OMISIONES POR PROFESIONAL Y ESPECIALIDAD
+    # =====================================================
+    
+    tabla_omisiones_profesional = (
+        df_medicos
+        .groupby(
+            [
+                col_h1_prof,
+                "ESPECIALIDAD_FINAL"
+            ],
+            dropna=False
+        )
+        .size()
+        .reset_index(
+            name="OMISIONES"
+        )
+    )
+    
+    # Limpiar nombre del profesional
+    tabla_omisiones_profesional[col_h1_prof] = (
+        tabla_omisiones_profesional[col_h1_prof]
+        .fillna("SIN PROFESIONAL")
+        .astype(str)
+        .str.strip()
+    )
+    
+    # Limpiar especialidad
+    tabla_omisiones_profesional["ESPECIALIDAD_FINAL"] = (
+        tabla_omisiones_profesional["ESPECIALIDAD_FINAL"]
+        .fillna("SIN ESPECIALIDAD")
+        .astype(str)
+        .str.strip()
+    )
+    
+    # Ordenar por especialidad y luego por omisiones
+    tabla_omisiones_profesional = (
+        tabla_omisiones_profesional
+        .sort_values(
+            [
+                "ESPECIALIDAD_FINAL",
+                "OMISIONES"
+            ],
+            ascending=[
+                True,
+                False
+            ]
+        )
+        .reset_index(drop=True)
+    )
+    
+    # Convertir para Word
+    filas_omisiones_profesional = (
+        tabla_omisiones_profesional[
+            [
+                col_h1_prof,
+                "ESPECIALIDAD_FINAL",
+                "OMISIONES"
+            ]
+        ]
+        .to_dict(
+            orient="records"
+        )
+    )
+
     # =====================================================
     # RESUMEN GENERAL
     # =====================================================
@@ -1209,6 +1275,10 @@ if archivo:
             
                 "total_omisiones_especialidad":
                     total_omisiones_especialidad,
+
+                "omisiones_profesional":
+                    filas_omisiones_profesional,
+
 }
 
 
