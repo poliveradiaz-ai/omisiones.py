@@ -497,12 +497,17 @@ if archivo:
     
     tabla_omisiones_policlinico = (
         df_no_medicos
-        .groupby("POLICLINICO", dropna=False)
+        .groupby(
+            "POLICLINICO",
+            dropna=False
+        )
         .size()
-        .reset_index(name="OMISIONES")
+        .reset_index(
+            name="OMISIONES"
+        )
     )
     
-    # Reemplazar valores vacíos
+    # Limpiar valores vacíos
     tabla_omisiones_policlinico["POLICLINICO"] = (
         tabla_omisiones_policlinico["POLICLINICO"]
         .fillna("SIN POLICLÍNICO")
@@ -523,14 +528,16 @@ if archivo:
     # Convertir a lista para Word
     filas_omisiones_policlinico = (
         tabla_omisiones_policlinico
-        .to_dict(orient="records")
+        .to_dict(
+            orient="records"
+        )
     )
     
     # Total
-    total_omisiones_policlinico = (
-        tabla_omisiones_policlinico["OMISIONES"]
-        .sum()
+    total_omisiones_policlinico = int(
+        tabla_omisiones_policlinico["OMISIONES"].sum()
     )
+
     
     
     # =====================================================
@@ -544,10 +551,12 @@ if archivo:
             dropna=False
         )
         .size()
-        .reset_index(name="OMISIONES")
+        .reset_index(
+            name="OMISIONES"
+        )
     )
     
-    # Reemplazar especialidades vacías
+    # Limpiar especialidades vacías
     tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"] = (
         tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"]
         .fillna("SIN ESPECIALIDAD")
@@ -568,15 +577,16 @@ if archivo:
     # Convertir a lista para Word
     filas_omisiones_especialidad = (
         tabla_omisiones_especialidad
-        .to_dict(orient="records")
+        .to_dict(
+            orient="records"
+        )
     )
     
     # Total
-    total_omisiones_especialidad = (
-        tabla_omisiones_especialidad["OMISIONES"]
-        .sum()
-    )
-    
+    total_omisiones_especialidad = int(
+        tabla_omisiones_especialidad["OMISIONES"].sum()
+)
+
     
     # =====================================================
     # RESUMEN DE OMISIONES POR FUNCIONARIO Y POLICLÍNICO
