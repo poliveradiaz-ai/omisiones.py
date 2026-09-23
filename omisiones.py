@@ -529,8 +529,12 @@ if archivo:
     # NUMERACIÓN
     # =====================================================
     
+    tabla_omisiones_policlinico["N"] = range(
+        1,
+        len(tabla_omisiones_policlinico) + 1
+    )
     
-    
+        
     # =====================================================
     # CONVERTIR PARA WORD
     # =====================================================
