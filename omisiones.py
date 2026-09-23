@@ -545,6 +545,72 @@ if archivo:
 
 
 
+        # =====================================================
+        # RESUMEN DE OMISIONES POR ESPECIALIDAD MÉDICA
+        # =====================================================
+    
+        tabla_omisiones_especialidad = (
+            df_medicos
+            .groupby(
+                "ESPECIALIDAD_FINAL",
+                dropna=False
+            )
+            .size()
+            .reset_index(
+                name="OMISIONES"
+            )
+        )
+    
+        # Reemplazar especialidades vacías
+        tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"] = (
+            tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"]
+            .fillna("SIN ESPECIALIDAD")
+            .astype(str)
+            .str.strip()
+        )
+    
+        # Ordenar de mayor a menor cantidad de omisiones
+        tabla_omisiones_especialidad = (
+            tabla_omisiones_especialidad
+            .sort_values(
+                "OMISIONES",
+                ascending=False
+            )
+            .reset_index(drop=True)
+        )
+    
+        # Numeración
+        tabla_omisiones_especialidad["N"] = range(
+            1,
+            len(tabla_omisiones_especialidad) + 1
+        )
+    
+        # Orden de columnas para Word
+        tabla_omisiones_especialidad = (
+            tabla_omisiones_especialidad[
+                [
+                    "N",
+                    "ESPECIALIDAD_FINAL",
+                    "OMISIONES"
+                ]
+            ]
+        )
+    
+        # Convertir a lista para Word
+        filas_omisiones_especialidad = (
+            tabla_omisiones_especialidad
+            .to_dict(
+                orient="records"
+            )
+        )
+    
+        # Total de omisiones médicas
+        total_omisiones_especialidad = (
+            tabla_omisiones_especialidad["OMISIONES"]
+            .sum()
+        )
+
+
     # =====================================================
     # RESUMEN DE OMISIONES POR FUNCIONARIO Y POLICLÍNICO
     # ORDENADO SEGÚN LA TABLA DE POLICLÍNICOS
@@ -1107,7 +1173,9 @@ if archivo:
                     int(total_omisiones_policlinico),
                 "total_omisiones_policlinico": total_omisiones_policlinico,
                 "funcionarios_policlinico": filas_funcionario_policlinico,
+                "omisiones_especialidad": filas_omisiones_especialidad,
 
+                "total_omisiones_especialidad": int(total_omisiones_especialidad),
 
             }
 
