@@ -531,6 +531,18 @@ if archivo:
         .sum()
     )
 
+    tabla_omisiones_policlinico["N"] = range(
+    1,
+    len(tabla_omisiones_policlinico) + 1
+)
+
+    filas_omisiones_policlinico = (
+    tabla_omisiones_policlinico[
+        ["N", "POLICLINICO", "OMISIONES"]
+    ]
+    .to_dict(orient="records")
+)
+
     
     # =====================================================
     # RESUMEN GENERAL
