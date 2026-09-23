@@ -526,23 +526,12 @@ if archivo:
     )
     
     # =====================================================
-    # NUMERACIÓN
-    # =====================================================
-    
-    tabla_omisiones_policlinico["N"] = range(
-        1,
-        len(tabla_omisiones_policlinico) + 1
-    )
-    
-        
-    # =====================================================
     # CONVERTIR PARA WORD
     # =====================================================
     
     filas_omisiones_policlinico = (
         tabla_omisiones_policlinico[
             [
-                "N",
                 "POLICLINICO",
                 "OMISIONES"
             ]
@@ -552,6 +541,14 @@ if archivo:
         )
     )
     
+    # =====================================================
+    # TOTAL
+    # =====================================================
+    
+    total_omisiones_policlinico = int(
+        tabla_omisiones_policlinico["OMISIONES"].sum()
+    )
+
     # =====================================================
     # TOTAL
     # =====================================================
