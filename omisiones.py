@@ -502,6 +502,15 @@ if archivo:
         .reset_index(name="OMISIONES")
     )
     
+    # Reemplazar valores vacíos
+    tabla_omisiones_policlinico["POLICLINICO"] = (
+        tabla_omisiones_policlinico["POLICLINICO"]
+        .fillna("SIN POLICLÍNICO")
+        .astype(str)
+        .str.strip()
+    )
+    
+    # Ordenar de mayor a menor
     tabla_omisiones_policlinico = (
         tabla_omisiones_policlinico
         .sort_values(
@@ -509,14 +518,6 @@ if archivo:
             ascending=False
         )
         .reset_index(drop=True)
-    )
-    
-    # Reemplazar valores vacíos
-    tabla_omisiones_policlinico["POLICLINICO"] = (
-        tabla_omisiones_policlinico["POLICLINICO"]
-        .fillna("SIN POLICLÍNICO")
-        .astype(str)
-        .str.strip()
     )
     
     # Convertir a lista para Word
@@ -530,21 +531,8 @@ if archivo:
         tabla_omisiones_policlinico["OMISIONES"]
         .sum()
     )
-
-    tabla_omisiones_policlinico["N"] = range(
-    1,
-    len(tabla_omisiones_policlinico) + 1
-)
-
-    filas_omisiones_policlinico = (
-    tabla_omisiones_policlinico[
-        ["N", "POLICLINICO", "OMISIONES"]
-    ]
-    .to_dict(orient="records")
-)
-
-
-
+    
+    
     # =====================================================
     # RESUMEN DE OMISIONES POR ESPECIALIDAD MÉDICA
     # =====================================================
@@ -556,18 +544,18 @@ if archivo:
             dropna=False
         )
         .size()
-        .reset_index(
-            name="OMISIONES"
-        )
+        .reset_index(name="OMISIONES")
     )
-         # Reemplazar especialidades vacías
+    
+    # Reemplazar especialidades vacías
     tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"] = (
         tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"]
         .fillna("SIN ESPECIALIDAD")
         .astype(str)
         .str.strip()
     )
-         # Ordenar de mayor a menor cantidad de omisiones
+    
+    # Ordenar de mayor a menor
     tabla_omisiones_especialidad = (
         tabla_omisiones_especialidad
         .sort_values(
@@ -576,38 +564,22 @@ if archivo:
         )
         .reset_index(drop=True)
     )
-         # Numeración
-    tabla_omisiones_especialidad["N"] = range(
-        1,
-        len(tabla_omisiones_especialidad) + 1
-    )
-         # Orden de columnas para Word
-    tabla_omisiones_especialidad = (
-        tabla_omisiones_especialidad[
-            [
-                "N",
-                "ESPECIALIDAD_FINAL",
-                "OMISIONES"
-            ]
-        ]
-    )
-         # Convertir a lista para Word
+    
+    # Convertir a lista para Word
     filas_omisiones_especialidad = (
         tabla_omisiones_especialidad
-        .to_dict(
-            orient="records"
-        )
+        .to_dict(orient="records")
     )
-         # Total de omisiones médicas
+    
+    # Total
     total_omisiones_especialidad = (
         tabla_omisiones_especialidad["OMISIONES"]
         .sum()
     )
-
-
+    
+    
     # =====================================================
     # RESUMEN DE OMISIONES POR FUNCIONARIO Y POLICLÍNICO
-    # ORDENADO SEGÚN LA TABLA DE POLICLÍNICOS
     # =====================================================
     
     tabla_funcionario_policlinico = (
@@ -620,14 +592,13 @@ if archivo:
             dropna=False
         )
         .size()
-        .reset_index(
-            name="OMISIONES"
-        )
+        .reset_index(name="OMISIONES")
     )
     
     # Renombrar funcionario
     tabla_funcionario_policlinico = (
-        tabla_funcionario_policlinico.rename(
+        tabla_funcionario_policlinico
+        .rename(
             columns={
                 col_h1_prof: "FUNCIONARIO"
             }
@@ -652,18 +623,14 @@ if archivo:
     
     
     # =====================================================
-    # ORDEN DE POLICLÍNICOS SEGÚN PRIMERA TABLA
+    # ORDENAR SEGÚN LA TABLA DE POLICLÍNICOS
     # =====================================================
     
     orden_policlinicos = (
-        tabla_omisiones_policlinico[
-            "POLICLINICO"
-        ]
+        tabla_omisiones_policlinico["POLICLINICO"]
         .tolist()
     )
     
-    
-    # Convertir POLICLINICO en categoría ordenada
     tabla_funcionario_policlinico["POLICLINICO"] = (
         pd.Categorical(
             tabla_funcionario_policlinico["POLICLINICO"],
@@ -691,6 +658,13 @@ if archivo:
         )
         .reset_index(drop=True)
     )
+    
+    # Convertir a lista para Word
+    filas_funcionario_policlinico = (
+        tabla_funcionario_policlinico
+        .to_dict(orient="records")
+    )
+
     
     
     # =====================================================
