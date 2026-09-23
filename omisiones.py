@@ -492,6 +492,47 @@ if archivo:
 
 
     # =====================================================
+    # RESUMEN DE OMISIONES POR POLICLÍNICO
+    # =====================================================
+    
+    tabla_omisiones_policlinico = (
+        df_no_medicos
+        .groupby("POLICLINICO", dropna=False)
+        .size()
+        .reset_index(name="OMISIONES")
+    )
+    
+    tabla_omisiones_policlinico = (
+        tabla_omisiones_policlinico
+        .sort_values(
+            "OMISIONES",
+            ascending=False
+        )
+        .reset_index(drop=True)
+    )
+    
+    # Reemplazar valores vacíos
+    tabla_omisiones_policlinico["POLICLINICO"] = (
+        tabla_omisiones_policlinico["POLICLINICO"]
+        .fillna("SIN POLICLÍNICO")
+        .astype(str)
+        .str.strip()
+    )
+    
+    # Convertir a lista para Word
+    filas_omisiones_policlinico = (
+        tabla_omisiones_policlinico
+        .to_dict(orient="records")
+    )
+    
+    # Total
+    total_omisiones_policlinico = (
+        tabla_omisiones_policlinico["OMISIONES"]
+        .sum()
+    )
+
+    
+    # =====================================================
     # RESUMEN GENERAL
     # =====================================================
 
@@ -942,6 +983,11 @@ if archivo:
                 "porc_leymedica_agendadas":porcentaje_leymedica_agendadas,
 
                 "total_ejecutadas": total_ejecutadas,
+                "omisiones_policlinico": filas_omisiones_policlinico,
+
+                "total_omisiones_policlinico":
+                    int(total_omisiones_policlinico),
+                
 
             }
 
