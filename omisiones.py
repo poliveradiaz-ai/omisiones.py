@@ -759,7 +759,10 @@ if archivo:
         .str.strip()
     )
     
-    # Cambiar nombres para Word
+    # =====================================================
+    # CAMBIAR NOMBRES PARA WORD
+    # =====================================================
+
     tabla_omisiones_profesional = (
         tabla_omisiones_profesional
         .rename(
@@ -770,15 +773,19 @@ if archivo:
         )
     )
     
+   
     # =====================================================
     # ORDENAR SEGÚN EL ORDEN DE LA TABLA DE ESPECIALIDADES
     # =====================================================
-    
+
     orden_especialidades = (
-        tabla_omisiones_especialidad["ESPECIALIDAD"]
+        tabla_omisiones_especialidad[
+            "ESPECIALIDAD_FINAL"
+        ]
         .tolist()
     )
-    
+
+
     tabla_omisiones_profesional["ESPECIALIDAD"] = (
         pd.Categorical(
             tabla_omisiones_profesional["ESPECIALIDAD"],
@@ -786,12 +793,16 @@ if archivo:
             ordered=True
         )
     )
-    
+
+    # =====================================================
+    # ORDEN FINAL
+    # =====================================================
+
     tabla_omisiones_profesional = (
         tabla_omisiones_profesional
         .sort_values(
             [
-                "ESPECIALIDAD_FINAL",
+                "ESPECIALIDAD",
                 "OMISIONES"
             ],
             ascending=[
@@ -802,8 +813,11 @@ if archivo:
         .reset_index(drop=True)
     )
 
-    
-    # Convertir para Word
+
+    # =====================================================
+    # CONVERTIR PARA WORD
+    # =====================================================
+
     filas_omisiones_profesional = (
         tabla_omisiones_profesional[
             [
@@ -815,9 +829,7 @@ if archivo:
         .to_dict(
             orient="records"
         )
-)
-
-
+    )
 
 
 
