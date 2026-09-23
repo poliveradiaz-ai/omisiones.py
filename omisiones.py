@@ -770,12 +770,28 @@ if archivo:
         )
     )
     
-    # Ordenar
+    # =====================================================
+    # ORDENAR SEGÚN EL ORDEN DE LA TABLA DE ESPECIALIDADES
+    # =====================================================
+    
+    orden_especialidades = (
+        tabla_omisiones_especialidad["ESPECIALIDAD_FINAL"]
+        .tolist()
+    )
+    
+    tabla_omisiones_profesional["ESPECIALIDAD_FINAL"] = (
+        pd.Categorical(
+            tabla_omisiones_profesional["ESPECIALIDAD_FINAL"],
+            categories=orden_especialidades,
+            ordered=True
+        )
+    )
+    
     tabla_omisiones_profesional = (
         tabla_omisiones_profesional
         .sort_values(
             [
-                "ESPECIALIDAD",
+                "ESPECIALIDAD_FINAL",
                 "OMISIONES"
             ],
             ascending=[
@@ -785,6 +801,7 @@ if archivo:
         )
         .reset_index(drop=True)
     )
+
     
     # Convertir para Word
     filas_omisiones_profesional = (
