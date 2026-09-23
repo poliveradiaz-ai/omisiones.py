@@ -544,8 +544,10 @@ if archivo:
 )
 
 
+
     # =====================================================
     # RESUMEN DE OMISIONES POR FUNCIONARIO Y POLICLÍNICO
+    # ORDENADO SEGÚN LA TABLA DE POLICLÍNICOS
     # =====================================================
     
     tabla_funcionario_policlinico = (
@@ -563,7 +565,7 @@ if archivo:
         )
     )
     
-    # Renombrar columnas
+    # Renombrar funcionario
     tabla_funcionario_policlinico = (
         tabla_funcionario_policlinico.rename(
             columns={
@@ -572,7 +574,7 @@ if archivo:
         )
     )
     
-    # Limpiar nombres
+    # Limpiar funcionario
     tabla_funcionario_policlinico["FUNCIONARIO"] = (
         tabla_funcionario_policlinico["FUNCIONARIO"]
         .fillna("SIN FUNCIONARIO")
@@ -580,6 +582,7 @@ if archivo:
         .str.strip()
     )
     
+    # Limpiar policlínico
     tabla_funcionario_policlinico["POLICLINICO"] = (
         tabla_funcionario_policlinico["POLICLINICO"]
         .fillna("SIN POLICLÍNICO")
@@ -587,7 +590,33 @@ if archivo:
         .str.strip()
     )
     
-    # Ordenar
+    
+    # =====================================================
+    # ORDEN DE POLICLÍNICOS SEGÚN PRIMERA TABLA
+    # =====================================================
+    
+    orden_policlinicos = (
+        tabla_omisiones_policlinico[
+            "POLICLINICO"
+        ]
+        .tolist()
+    )
+    
+    
+    # Convertir POLICLINICO en categoría ordenada
+    tabla_funcionario_policlinico["POLICLINICO"] = (
+        pd.Categorical(
+            tabla_funcionario_policlinico["POLICLINICO"],
+            categories=orden_policlinicos,
+            ordered=True
+        )
+    )
+    
+    
+    # =====================================================
+    # ORDEN FINAL
+    # =====================================================
+    
     tabla_funcionario_policlinico = (
         tabla_funcionario_policlinico
         .sort_values(
@@ -603,7 +632,11 @@ if archivo:
         .reset_index(drop=True)
     )
     
-    # Convertir para Word
+    
+    # =====================================================
+    # CONVERTIR PARA WORD
+    # =====================================================
+    
     filas_funcionario_policlinico = (
         tabla_funcionario_policlinico[
             [
@@ -617,7 +650,6 @@ if archivo:
         )
     )
 
-    
     # =====================================================
     # RESUMEN GENERAL
     # =====================================================
