@@ -494,7 +494,7 @@ if archivo:
     # =====================================================
     # RESUMEN DE OMISIONES POR POLICLÍNICO
     # =====================================================
-    
+   
     tabla_omisiones_policlinico = (
         df_no_medicos
         .groupby(
@@ -506,7 +506,7 @@ if archivo:
             name="OMISIONES"
         )
     )
-    
+   
     # Reemplazar valores vacíos
     tabla_omisiones_policlinico["POLICLINICO"] = (
         tabla_omisiones_policlinico["POLICLINICO"]
@@ -514,7 +514,7 @@ if archivo:
         .astype(str)
         .str.strip()
     )
-    
+   
     # Ordenar de mayor a menor
     tabla_omisiones_policlinico = (
         tabla_omisiones_policlinico
@@ -524,14 +524,25 @@ if archivo:
         )
         .reset_index(drop=True)
     )
-    
+   
+    # =====================================================
+    # NUMERACIÓN
+    # =====================================================
+   
+    tabla_omisiones_policlinico["N"] = range(
+        1,
+        len(tabla_omisiones_policlinico) + 1
+    )
+   
+       
     # =====================================================
     # CONVERTIR PARA WORD
     # =====================================================
-    
+   
     filas_omisiones_policlinico = (
         tabla_omisiones_policlinico[
             [
+                "N",
                 "POLICLINICO",
                 "OMISIONES"
             ]
