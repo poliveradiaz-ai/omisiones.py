@@ -744,7 +744,7 @@ if archivo:
         )
     )
     
-    # Limpiar profesional
+    # Limpiar nombre del profesional
     tabla_omisiones_profesional[col_h1_prof] = (
         tabla_omisiones_profesional[col_h1_prof]
         .fillna("SIN PROFESIONAL")
@@ -760,7 +760,7 @@ if archivo:
         .str.strip()
     )
     
-    # Ordenar
+    # Ordenar por especialidad y luego por omisiones
     tabla_omisiones_profesional = (
         tabla_omisiones_profesional
         .sort_values(
@@ -776,19 +776,12 @@ if archivo:
         .reset_index(drop=True)
     )
     
-    # Preparar para Word
+    # Convertir para Word
     filas_omisiones_profesional = (
-        tabla_omisiones_profesional
-        .rename(
-            columns={
-                col_h1_prof: "PROFESIONAL",
-                "ESPECIALIDAD_FINAL": "ESPECIALIDAD"
-            }
-        )
-        [
+        tabla_omisiones_profesional[
             [
-                "PROFESIONAL",
-                "ESPECIALIDAD",
+                col_h1_prof,
+                "ESPECIALIDAD_FINAL",
                 "OMISIONES"
             ]
         ]
@@ -796,7 +789,6 @@ if archivo:
             orient="records"
         )
     )
-
 
     # =====================================================
     # RESUMEN GENERAL
