@@ -1243,6 +1243,42 @@ if archivo:
                 else 0
             )
 
+
+            # =========================
+            # CALCULO PORCENTAJES
+            # =========================
+            
+            # % de horas asignadas sobre horas ejecutadas
+            porcentaje_asignadas_ejecutadas = (
+                round(
+                    (total_asignadas / total_ejecutadas) * 100,
+                    1
+                )
+                if total_ejecutadas > 0
+                else 0
+            )
+            
+            # % omisiones médicos sobre total ejecutadas
+            porcentaje_omisiones_medicos_ejecutadas = (
+                round(
+                    (total_medicos / total_ejecutadas) * 100,
+                    1
+                )
+                if total_ejecutadas > 0
+                else 0
+            )
+            
+            # % omisiones no médicos sobre total ejecutadas
+            porcentaje_omisiones_Ley18_ejecutadas = (
+                round(
+                    (total_no_medicos / total_ejecutadas) * 100,
+                    1
+                )
+                if total_ejecutadas > 0
+                else 0
+            )
+
+            
             # -------------------------------------------------
             # CONTEXTO
             # -------------------------------------------------
@@ -1293,7 +1329,11 @@ if archivo:
             
                 "total_ejecutadas":
                     total_ejecutadas,
-            
+
+                "porcentaje_asignadas_ejecutadas": porcentaje_asignadas_ejecutadas,
+                "porcentaje_Leymedica_ejecutadas":porcentaje_omisiones_medicos_ejecutadas,
+                "porcentaje_Ley18_ejecutadas": porcentaje_omisiones_Ley18_ejecutadas,
+                
                 # -----------------------------------------
                 # POLICLÍNICOS
                 # -----------------------------------------
