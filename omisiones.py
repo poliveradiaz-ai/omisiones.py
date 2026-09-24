@@ -876,29 +876,51 @@ if archivo:
     # =====================================================
     # FECHAS
     # =====================================================
-
+    
     st.markdown(
         "## 📄 Generación de documentos"
     )
-
+    
     col_fecha1, col_fecha2 = st.columns(2)
-
+    
     with col_fecha1:
-
+    
         fecha_corte = st.date_input(
             "Fecha de corte",
             format="DD/MM/YYYY",
             key="fecha_corte"
         )
-
+    
     with col_fecha2:
-
+    
         fecha_envio_preliminar = st.date_input(
             "Fecha de envío preliminar",
             format="DD/MM/YYYY",
             key="fecha_envio_preliminar"
         )
-
+    
+    
+    # =====================================================
+    # FECHA DE ENVÍO FINAL
+    # =====================================================
+    
+    incluir_fecha_envio_final = st.checkbox(
+        "Incluir fecha de envío final",
+        value=False,
+        key="incluir_fecha_envio_final"
+    )
+    
+    if incluir_fecha_envio_final:
+    
+        fecha_envio_final = st.date_input(
+            "Fecha de envío final",
+            format="DD/MM/YYYY",
+            key="fecha_envio_final"
+        )
+    
+    else:
+    
+        fecha_envio_final = None
 
     # =====================================================
     # TOTAL AGENDADAS - EJECUTADAS
@@ -1333,6 +1355,12 @@ if archivo:
                 "porcentaje_asignadas_ejecutadas": porcentaje_asignadas_ejecutadas,
                 "porcentaje_Leymedica_ejecutadas":porcentaje_omisiones_medicos_ejecutadas,
                 "porcentaje_Ley18_ejecutadas": porcentaje_omisiones_Ley18_ejecutadas,
+                "fecha_envio_final": (
+                    fecha_envio_final.strftime("%d/%m/%Y")
+                    if fecha_envio_final is not None
+                    else ""
+                ),
+
                 
                 # -----------------------------------------
                 # POLICLÍNICOS
